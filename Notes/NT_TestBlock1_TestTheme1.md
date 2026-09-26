@@ -2,7 +2,7 @@
 qwertyqwerty _123_ qwertyqwerty
 qwertyqwertyqwertyqwerty
 qwertyqwerty ___ExampleName2___ qwertyqwerty
-qwertyqwrtyqwertyqwerty
+qwertyqwrtyqwertyqwerty __SomeTerm__
 --- 
 qwertyqwerrtyqwerty
-![qwerty](/Images/Type1/TestBlock1_TestTheme1_ImgType1Img1_ExampleName1.png)
+![qwerty](/Images/Type1/TestBlock1_TestTheme1_ExampleName1.png)
