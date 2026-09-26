@@ -1,4 +1,5 @@
 {
-    "Blocks": ["TestBlock1"],
-    "Topics": ["TestTheme1"]
+  "TestBlock1": [
+    "TestTheme1"
+  ]
 }

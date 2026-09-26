@@ -6,4 +6,3 @@ qwertyqwrtyqwertyqwerty
 --- 
 qwertyqwerrtyqwerty
 ![qwerty](/Images/Type1/TestBlock1_TestTheme1_ImgType1Img1_ExampleName1.png)
-###### This is a ___ExampleName1___

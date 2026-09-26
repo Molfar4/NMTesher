@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NMTesher</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --c-primary-dark: #624621;
+      --c-primary: #9F6D2D;
+      --c-accent-peach: #F8DAB2;
+      --c-bg-paper: #EEEBE4;
+      --c-border: #D2D2D2;
+      --c-accent-red: #E93C35;
+      --c-secondary-blue: #B9C7D2;
+      --c-muted: #989398;
+      --c-slate-blue: #627C8C;
+      --c-text-dark: #2B3034;
+      --c-surface: #FDFCFA;
+      --c-surface-card: #FFFFFF;
+      --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--c-bg-paper);
+      color: var(--c-text-dark);
+      line-height: 1.65;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header.top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(238, 235, 228, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 2px solid var(--c-border);
+      box-shadow: 0 4px 14px rgba(43, 48, 52, 0.05);
+      padding: 12px 24px 16px;
+      transition: padding 0.25s ease;
+    }
+
+    .nav-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--c-border);
+      transition: margin 0.25s ease, padding 0.25s ease;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-title .badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: var(--c-accent-peach);
+      color: var(--c-primary-dark);
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--c-primary);
+    }
+
+    .nav-right-cluster {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .current-path {
+      font-size: 0.85rem;
+      color: var(--c-slate-blue);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(210, 210, 210, 0.6);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .current-path:hover {
+      background: #FFFFFF;
+      border-color: var(--c-primary);
+    }
+
+    .current-path span.divider {
+      color: var(--c-muted);
+    }
+
+    .toggle-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      color: var(--c-primary-dark);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      user-select: none;
+    }
+
+    .toggle-nav-btn:hover {
+      background: var(--c-accent-peach);
+      border-color: var(--c-primary);
+      color: var(--c-primary-dark);
+    }
+
+    .toggle-nav-btn .toggle-icon {
+      font-size: 0.68rem;
+      transition: transform 0.25s ease;
+      display: inline-block;
+    }
+
+    .nav-selectors {
+      max-height: 250px;
+      opacity: 1;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    }
+
+    header.top-nav.is-collapsed {
+      padding-bottom: 10px;
+    }
+
+    header.top-nav.is-collapsed .nav-header-row {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    header.top-nav.is-collapsed .nav-selectors {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    header.top-nav.is-collapsed .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .selector-tier {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .selector-tier:last-child {
+      margin-bottom: 0;
+    }
+
+    .tier-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--c-slate-blue);
+      width: 58px;
+      flex-shrink: 0;
+    }
+
+    .chips-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chip {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      color: var(--c-text-dark);
+      padding: 5px 14px;
+      border-radius: 18px;
+      font-size: 0.86rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease-in-out;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip:hover {
+      border-color: var(--c-primary);
+      background: var(--c-accent-peach);
+      transform: translateY(-1px);
+    }
+
+    .chip-block.active {
+      background: var(--c-primary-dark);
+      color: #FFFFFF;
+      border-color: var(--c-primary-dark);
+      box-shadow: 0 2px 6px rgba(98, 70, 33, 0.3);
+    }
+
+    .chip-topic.active {
+      background: var(--c-primary);
+      color: #FFFFFF;
+      border-color: var(--c-primary);
+      box-shadow: 0 2px 6px rgba(159, 109, 45, 0.3);
+    }
+
+    main.content-area {
+      flex: 1;
+      width: 100%;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 32px 24px 60px;
+    }
+
+    .note-container {
+      background: var(--c-surface-card);
+      border-radius: 10px;
+      border: 1px solid var(--c-border);
+      padding: 40px 48px;
+      box-shadow: 0 4px 18px rgba(43, 48, 52, 0.04);
+      min-height: 480px;
+    }
+
+    .markdown-body h1,
+    .markdown-body h2,
+    .markdown-body h3,
+    .markdown-body h4 {
+      color: var(--c-primary-dark);
+      font-weight: 700;
+      margin-top: 1.6em;
+      margin-bottom: 0.6em;
+      line-height: 1.3;
+    }
+
+    .markdown-body h1:first-child,
+    .markdown-body h2:first-child {
+      margin-top: 0;
+    }
+
+    .markdown-body h1 {
+      font-size: 2rem;
+      border-bottom: 2px solid var(--c-accent-peach);
+      padding-bottom: 8px;
+    }
+
+    .markdown-body h2 {
+      font-size: 1.5rem;
+      border-bottom: 1px solid var(--c-border);
+      padding-bottom: 6px;
+    }
+
+    .markdown-body h3 {
+      font-size: 1.25rem;
+      color: var(--c-primary);
+    }
+
+    .markdown-body p {
+      margin-bottom: 1.1em;
+      font-size: 1.05rem;
+      color: var(--c-text-dark);
+    }
+
+    .markdown-body strong {
+      color: var(--c-primary-dark);
+      font-weight: 700;
+    }
+
+    .markdown-body em {
+      color: var(--c-primary);
+    }
+
+    .markdown-body hr {
+      border: none;
+      height: 2px;
+      background: var(--c-border);
+      margin: 28px 0;
+    }
+
+    .markdown-body ul,
+    .markdown-body ol {
+      margin-bottom: 1.2em;
+      padding-left: 28px;
+    }
+
+    .markdown-body li {
+      margin-bottom: 0.4em;
+    }
+
+    .markdown-body blockquote {
+      border-left: 4px solid var(--c-primary);
+      padding: 10px 18px;
+      background-color: var(--c-bg-paper);
+      color: var(--c-slate-blue);
+      border-radius: 0 6px 6px 0;
+      margin: 1.4em 0;
+      font-style: italic;
+    }
+
+    .markdown-body code {
+      font-family: Consolas, Monaco, "Courier New", Courier, monospace;
+      font-size: 0.9em;
+      background-color: var(--c-bg-paper);
+      color: var(--c-primary-dark);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--c-border);
+    }
+
+    .markdown-body pre {
+      background: #2B3034;
+      color: #EEEBE4;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1.4em 0;
+    }
+
+    .markdown-body pre code {
+      background: transparent;
+      border: none;
+      color: inherit;
+      padding: 0;
+    }
+
+    .markdown-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid var(--c-border);
+      margin: 20px auto;
+      display: block;
+      box-shadow: 0 4px 14px rgba(43, 48, 52, 0.08);
+      background: #fff;
+    }
+
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5em 0;
+    }
+
+    .markdown-body th,
+    .markdown-body td {
+      border: 1px solid var(--c-border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    .markdown-body th {
+      background-color: var(--c-accent-peach);
+      color: var(--c-primary-dark);
+      font-weight: 600;
+    }
+
+    .state-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--c-slate-blue);
+    }
+
+    .state-message .icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .state-message h3 {
+      font-size: 1.3rem;
+      color: var(--c-primary-dark);
+      margin-bottom: 8px;
+    }
+
+    .state-message p {
+      max-width: 540px;
+      font-size: 0.96rem;
+      color: var(--c-text-dark);
+      line-height: 1.5;
+    }
+
+    .cors-help-box {
+      margin-top: 20px;
+      background: #FFF;
+      border: 1px solid var(--c-border);
+      border-left: 4px solid var(--c-accent-red);
+      border-radius: 6px;
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .cors-help-box code {
+      display: block;
+      margin-top: 8px;
+      background: var(--c-text-dark);
+      color: #EEEBE4;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+      font-size: 0.88rem;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--c-border);
+      border-top-color: var(--c-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      header.top-nav {
+        padding: 10px 14px 12px;
+      }
+      .nav-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .nav-right-cluster {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .selector-tier {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .tier-label {
+        width: 100%;
+        font-size: 0.72rem;
+      }
+      main.content-area {
+        padding: 16px 12px 40px;
+      }
+      .note-container {
+        padding: 24px 20px;
+      }
+      .markdown-body h1 {
+        font-size: 1.6rem;
+      }
+      .markdown-body h2 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-nav" id="topNav">
+    <div class="nav-header-row">
+      <div class="brand-title">
+        <span>📖 NMTesher</span>
+        <span class="badge">Конспекти</span>
+      </div>
+
+      <div class="nav-right-cluster">
+        <div class="current-path" id="currentPathDisplay" title="Поточний конспект (клікніть, щоб розгорнути меню)">
+          <span id="activeBlockLabel">—</span>
+          <span class="divider">/</span>
+          <span id="activeTopicLabel">—</span>
+        </div>
+
+        <button id="toggleNavBtn" class="toggle-nav-btn" aria-label="Згорнути або розгорнути панель тем" title="Згорнути панель тем">
+          <span class="toggle-text">Згорнути</span>
+          <span class="toggle-icon">▲</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="navSelectors" class="nav-selectors">
+      <div class="selector-tier">
+        <div class="tier-label">Блоки:</div>
+        <div class="chips-group" id="blocksChipsContainer">
+        </div>
+      </div>
+
+      <div class="selector-tier">
+        <div class="tier-label">Теми:</div>
+        <div class="chips-group" id="topicsChipsContainer">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content-area">
+    <div class="note-container">
+      <div id="noteContent" class="markdown-body">
+        <div class="state-message">
+          <div class="spinner"></div>
+          <p>Завантаження конспекту...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const appState = {
+      blocks: [],         
+      topicsMap: {},      
+      currentBlock: null,
+      currentTopic: null
+    };
+
+    const renderer = new marked.Renderer();
+
+    renderer.image = function(href, title, text) {
+      if (typeof href === 'object' && href !== null) {
+        text = href.text || text || '';
+        title = href.title || title || '';
+        href = href.href || '';
+      }
+      let cleanHref = href || '';
+      if (cleanHref.startsWith('/Images/')) {
+        cleanHref = '.' + cleanHref;
+      } else if (cleanHref.startsWith('/')) {
+        cleanHref = '.' + cleanHref;
+      }
+      return `<img src="${cleanHref}" alt="${text || ''}" title="${title || ''}" loading="lazy" />`;
+    };
+
+    marked.setOptions({
+      renderer: renderer,
+      gfm: true,
+      breaks: true
+    });
+
+    function setupToggleNav() {
+      const toggleBtn = document.getElementById('toggleNavBtn');
+      const topNav = document.getElementById('topNav');
+      const toggleText = toggleBtn.querySelector('.toggle-text');
+      const currentPathDisplay = document.getElementById('currentPathDisplay');
+
+      let isCollapsed = false;
+
+      function updateToggleState(collapsed) {
+        isCollapsed = collapsed;
+        topNav.classList.toggle('is-collapsed', isCollapsed);
+        toggleText.textContent = isCollapsed ? 'Розгорнути' : 'Згорнути';
+        toggleBtn.setAttribute('title', isCollapsed ? 'Розгорнути панель тем' : 'Згорнути панель тем');
+      }
+
+      toggleBtn.addEventListener('click', () => {
+        updateToggleState(!isCollapsed);
+      });
+
+      currentPathDisplay.addEventListener('click', () => {
+        if (isCollapsed) {
+          updateToggleState(false);
+        }
+      });
+    }
+
+    async function loadConfig() {
+      try {
+        const response = await fetch('list.json');
+        if (!response.ok) {
+          throw new Error(`HTTP помилка: ${response.status}`);
+        }
+        const data = await response.json();
+        parseConfig(data);
+      } catch (err) {
+        console.error('Не вдалося завантажити list.json:', err);
+        handleFetchError(err, 'list.json');
+      }
+    }
+
+    function parseConfig(data) {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        showError('Некоректний формат list.json: очікується ієрархічний JSON-об\'єкт вигляду { "НазваБлоку": ["Тема1", "Тема2"] }.');
+        return;
+      }
+
+      appState.topicsMap = data;
+      appState.blocks = Object.keys(data);
+
+      if (appState.blocks.length === 0) {
+        showError('У list.json не знайдено жодного блоку.');
+        return;
+      }
+
+      renderBlocksUI();
+      selectBlock(appState.blocks[0]);
+    }
+
+    function renderBlocksUI() {
+      const container = document.getElementById('blocksChipsContainer');
+      container.innerHTML = '';
+
+      appState.blocks.forEach(blockName => {
+        const btn = document.createElement('button');
+        btn.className = 'chip chip-block';
+        btn.textContent = blockName;
+        btn.setAttribute('data-block', blockName);
+        btn.addEventListener('click', () => selectBlock(blockName));
+        container.appendChild(btn);
+      });
+    }
+
+    function selectBlock(blockName) {
+      if (!appState.blocks.includes(blockName)) return;
+      appState.currentBlock = blockName;
+
+      document.querySelectorAll('.chip-block').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-block') === blockName);
+      });
+
+      renderTopicsUI(blockName);
+
+      const topics = appState.topicsMap[blockName] || [];
+      if (topics.length > 0) {
+        selectTopic(topics[0]);
+      } else {
+        appState.currentTopic = null;
+        updatePathDisplay();
+        showError(`Для блоку "${blockName}" не знайдено тем.`);
+      }
+    }
+
+    function renderTopicsUI(blockName) {
+      const container = document.getElementById('topicsChipsContainer');
+      container.innerHTML = '';
+
+      const topics = appState.topicsMap[blockName] || [];
+      topics.forEach(topicName => {
+        const btn = document.createElement('button');
+        btn.className = 'chip chip-topic';
+        btn.textContent = topicName;
+        btn.setAttribute('data-topic', topicName);
+        btn.addEventListener('click', () => selectTopic(topicName));
+        container.appendChild(btn);
+      });
+    }
+
+    function selectTopic(topicName) {
+      appState.currentTopic = topicName;
+
+      document.querySelectorAll('.chip-topic').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-topic') === topicName);
+      });
+
+      updatePathDisplay();
+      loadNoteMarkdown(appState.currentBlock, appState.currentTopic);
+    }
+
+    function updatePathDisplay() {
+      document.getElementById('activeBlockLabel').textContent = appState.currentBlock || '—';
+      document.getElementById('activeTopicLabel').textContent = appState.currentTopic || '—';
+    }
+
+    async function loadNoteMarkdown(block, topic) {
+      const contentEl = document.getElementById('noteContent');
+      contentEl.innerHTML = `
+        <div class="state-message">
+          <div class="spinner"></div>
+          <p>Завантаження: <strong>NT_${escapeHtml(block)}_${escapeHtml(topic)}.md</strong>...</p>
+        </div>
+      `;
+
+      const fileName = `NT_${block}_${topic}.md`;
+      const filePath = `Notes/${fileName}`;
+
+      try {
+        const response = await fetch(filePath);
+        if (!response.ok) {
+          throw new Error(`Файл не знайдено (${response.status})`);
+        }
+        const markdownText = await response.text();
+        contentEl.innerHTML = marked.parse(markdownText);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) {
+        console.error('Помилка завантаження конспекту:', err);
+        handleFetchError(err, filePath);
+      }
+    }
+
+    function handleFetchError(err, targetResource) {
+      const isFileProtocol = window.location.protocol === 'file:';
+      const contentEl = document.getElementById('noteContent');
+
+      let corsHelpHtml = '';
+      if (isFileProtocol) {
+        corsHelpHtml = `
+            <strong>⚠️ Браузер заблокував локальний запит (CORS):</strong><br>
+            
+        `;
+      }
+
+      contentEl.innerHTML = `
+        <div class="state-message">
+          <div class="icon">📄❌</div>
+          <h3>Не вдалося завантажити ${escapeHtml(targetResource)}</h3>
+          <p>${escapeHtml(err.message || 'Помилка доступу до файлу')}</p>
+          ${corsHelpHtml}
+        </div>
+      `;
+    }
+
+    function showError(message) {
+      const contentEl = document.getElementById('noteContent');
+      contentEl.innerHTML = `
+        <div class="state-message">
+          <div class="icon">⚠️</div>
+          <h3>Увага</h3>
+          <p>${escapeHtml(message)}</p>
+        </div>
+      `;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupToggleNav();
+      loadConfig();
+    });
+  </script>
+</body>
+</html>
