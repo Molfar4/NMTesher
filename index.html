@@ -133,7 +133,7 @@
       color: var(--c-primary-dark);
     }
 
-    .toggle-panel-nav-btn.active {
+    .toggle-nav-btn.active {
       background: var(--c-accent-peach);
       border-color: var(--c-primary);
       color: var(--c-primary-dark);
@@ -239,7 +239,7 @@
     main.content-area {
       flex: 1;
       width: 100%;
-      max-width: 1400px;
+      max-width: 1720px;
       margin: 0 auto;
       padding: 32px 24px 60px;
       display: flex;
@@ -252,7 +252,7 @@
     .note-container {
       flex: 1;
       min-width: 0;
-      max-width: 920px;
+      max-width: 900px;
       background: var(--c-surface-card);
       border-radius: 10px;
       border: 1px solid var(--c-border);
@@ -262,13 +262,9 @@
       transition: max-width 0.3s ease, margin 0.3s ease;
     }
 
-    body.panel-collapsed .note-container {
+    body.left-panel-collapsed.right-panel-collapsed .note-container {
       max-width: 980px;
       margin: 0 auto;
-    }
-
-    body:not(.panel-collapsed) .note-container {
-      max-width: 100%;
     }
 
     .markdown-body h1,
@@ -381,6 +377,13 @@
       display: block;
       box-shadow: 0 4px 14px rgba(43, 48, 52, 0.08);
       background: #fff;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .markdown-body img:hover {
+      transform: scale(1.01);
+      box-shadow: 0 6px 18px rgba(43, 48, 52, 0.14);
     }
 
     .markdown-body table {
@@ -468,7 +471,6 @@
     }
 
     .side-panel {
-      width: 350px;
       flex-shrink: 0;
       position: sticky;
       top: 86px;
@@ -483,7 +485,24 @@
       transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin 0.3s ease, transform 0.3s ease, border-color 0.2s ease;
     }
 
-    body.panel-collapsed .side-panel {
+    .side-panel.left-panel {
+      width: 320px;
+    }
+
+    .side-panel.right-panel {
+      width: 340px;
+    }
+
+    body.left-panel-collapsed .side-panel.left-panel {
+      width: 0;
+      margin-right: -24px;
+      opacity: 0;
+      pointer-events: none;
+      border-color: transparent;
+      transform: translateX(-18px);
+    }
+
+    body.right-panel-collapsed .side-panel.right-panel {
       width: 0;
       margin-left: -24px;
       opacity: 0;
@@ -499,7 +518,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      min-width: 348px;
+      min-width: 318px;
     }
 
     .side-panel-title {
@@ -532,7 +551,7 @@
       display: flex;
       border-bottom: 2px solid var(--c-border);
       background: var(--c-bg-paper);
-      min-width: 348px;
+      min-width: 318px;
     }
 
     .panel-tab-btn {
@@ -588,14 +607,14 @@
       padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      min-width: 348px;
+      gap: 12px;
+      min-width: 318px;
     }
 
     .tab-pane {
       display: none;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
     .tab-pane.active {
@@ -625,6 +644,61 @@
       border-color: var(--c-primary);
       box-shadow: 0 0 0 2px var(--c-primary), 0 2px 10px rgba(159, 109, 45, 0.25);
       animation: cardPulse 1.4s ease-in-out;
+    }
+
+    .gallery-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .gallery-card:hover {
+      border-color: var(--c-primary);
+      box-shadow: 0 4px 12px rgba(43, 48, 52, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .gallery-card.is-highlighted {
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 2px var(--c-primary), 0 4px 14px rgba(159, 109, 45, 0.3);
+      animation: cardPulse 1.4s ease-in-out;
+    }
+
+    .gallery-img-wrap {
+      width: 100%;
+      height: 180px;
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .gallery-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.25s ease;
+    }
+
+    .gallery-card:hover .gallery-img-wrap img {
+      transform: scale(1.04);
+    }
+
+    .gallery-caption {
+      padding: 9px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--c-primary-dark);
+      text-align: center;
+      background: var(--c-surface);
+      word-break: break-word;
     }
 
     @keyframes cardPulse {
@@ -725,15 +799,12 @@
     .docked-panel-tab {
       display: none;
       position: fixed;
-      right: 0;
       top: 50%;
       transform: translateY(-50%);
       background: var(--c-primary-dark);
       color: #FFFFFF;
       border: none;
-      border-radius: 8px 0 0 8px;
       padding: 14px 10px;
-      box-shadow: -2px 4px 14px rgba(43, 48, 52, 0.2);
       cursor: pointer;
       z-index: 90;
       writing-mode: vertical-rl;
@@ -747,48 +818,34 @@
       transition: background-color 0.2s, transform 0.2s;
     }
 
-    .docked-panel-tab:hover {
+    .docked-left-tab {
+      left: 0;
+      border-radius: 0 8px 8px 0;
+      box-shadow: 2px 4px 14px rgba(43, 48, 52, 0.2);
+    }
+
+    .docked-left-tab:hover {
+      background: var(--c-primary);
+      transform: translateY(-50%) translateX(2px);
+    }
+
+    body.left-panel-collapsed .docked-left-tab {
+      display: flex;
+    }
+
+    .docked-right-tab {
+      right: 0;
+      border-radius: 8px 0 0 8px;
+      box-shadow: -2px 4px 14px rgba(43, 48, 52, 0.2);
+    }
+
+    .docked-right-tab:hover {
       background: var(--c-primary);
       transform: translateY(-50%) translateX(-2px);
     }
 
-    body.panel-collapsed .docked-panel-tab {
+    body.right-panel-collapsed .docked-right-tab {
       display: flex;
-    }
-
-    .mobile-panel-toggle {
-      display: none;
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 150;
-      background: var(--c-primary-dark);
-      color: #FFFFFF;
-      border: none;
-      border-radius: 28px;
-      padding: 12px 20px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(43, 48, 52, 0.25);
-      align-items: center;
-      gap: 8px;
-      font-family: inherit;
-      transition: transform 0.2s, background-color 0.2s;
-    }
-
-    .mobile-panel-toggle:hover {
-      background: var(--c-primary);
-      transform: translateY(-2px);
-    }
-
-    .mobile-panel-toggle .toggle-badge {
-      background: var(--c-accent-peach);
-      color: var(--c-primary-dark);
-      padding: 2px 7px;
-      border-radius: 10px;
-      font-size: 0.75rem;
-      font-weight: 700;
     }
 
     .side-panel-overlay {
@@ -831,6 +888,21 @@
       color: var(--c-primary-dark);
     }
 
+    .interactive-image-name {
+      border-bottom: 2px dashed var(--c-slate-blue);
+      border-radius: 3px;
+      padding: 0 3px;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
+      scroll-margin-top: 110px;
+      color: var(--c-slate-blue);
+    }
+
+    .interactive-image-name:hover {
+      background-color: var(--c-secondary-blue);
+      color: var(--c-primary-dark);
+    }
+
     @keyframes textFlashHighlight {
       0% {
         background-color: #FFE082;
@@ -857,8 +929,32 @@
       scroll-margin-top: 110px;
     }
 
-    @media (max-width: 1024px) {
-      body.panel-collapsed .docked-panel-tab {
+    @keyframes imgFlashHighlight {
+      0% {
+        outline: 4px solid #FFE082;
+        box-shadow: 0 0 20px rgba(159, 109, 45, 0.6);
+        transform: scale(1.02);
+      }
+      60% {
+        outline: 4px solid #FFE082;
+        box-shadow: 0 0 20px rgba(159, 109, 45, 0.6);
+        transform: scale(1.02);
+      }
+      100% {
+        outline: 1px solid var(--c-border);
+        box-shadow: 0 4px 14px rgba(43, 48, 52, 0.08);
+        transform: scale(1);
+      }
+    }
+
+    .img-flash-highlight {
+      animation: imgFlashHighlight 2.6s ease forwards;
+      scroll-margin-top: 110px;
+    }
+
+    @media (max-width: 1200px) {
+      body.left-panel-collapsed .docked-left-tab,
+      body.right-panel-collapsed .docked-right-tab {
         display: none;
       }
 
@@ -867,12 +963,31 @@
         max-width: 920px;
       }
 
-      .side-panel {
+      .side-panel.left-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 340px;
+        max-width: 88vw;
+        max-height: 100vh;
+        border-radius: 0;
+        border-top: none;
+        border-bottom: none;
+        border-left: none;
+        z-index: 200;
+        transform: translateX(-100%);
+        box-shadow: 6px 0 24px rgba(43, 48, 52, 0.15);
+        opacity: 1 !important;
+        margin-right: 0 !important;
+      }
+
+      .side-panel.right-panel {
         position: fixed;
         top: 0;
         right: 0;
         bottom: 0;
-        width: 360px;
+        width: 340px;
         max-width: 88vw;
         max-height: 100vh;
         border-radius: 0;
@@ -887,16 +1002,12 @@
       }
 
       .side-panel.is-open {
-        transform: translateX(0);
+        transform: translateX(0) !important;
       }
 
       .side-panel-overlay.is-visible {
         display: block;
         opacity: 1;
-      }
-
-      .mobile-panel-toggle {
-        display: flex;
       }
     }
 
@@ -912,6 +1023,7 @@
       .nav-right-cluster {
         width: 100%;
         justify-content: space-between;
+        flex-wrap: wrap;
       }
       .selector-tier {
         flex-direction: column;
@@ -953,6 +1065,11 @@
           <span id="activeTopicLabel">—</span>
         </div>
 
+        <button id="toggleGalleryBtn" class="toggle-nav-btn toggle-gallery-nav-btn active" aria-label="Згорнути або розгорнути галерею" title="Згорнути або розгорнути галерею">
+          <span>🖼️</span>
+          <span>Галерея</span>
+        </button>
+
         <button id="toggleSidePanelBtn" class="toggle-nav-btn toggle-panel-nav-btn active" aria-label="Згорнути або розгорнути довідник" title="Згорнути або розгорнути довідник">
           <span class="toggle-panel-icon">📚</span>
           <span class="toggle-panel-text">Довідник</span>
@@ -981,6 +1098,35 @@
   </header>
 
   <main class="content-area">
+    <aside class="side-panel left-panel" id="galleryPanel">
+      <div class="side-panel-header">
+        <div class="side-panel-title">
+          <span>🖼️ Галерея</span>
+        </div>
+        <button class="collapse-panel-btn" id="collapseGalleryBtn" aria-label="Згорнути галерею" title="Згорнути галерею">&times;</button>
+      </div>
+
+      <div class="side-panel-tabs">
+        <button class="panel-tab-btn active" id="tabGalleryType1Btn">
+          <span>Тип 1</span>
+          <span class="tab-badge" id="galleryType1Count">0</span>
+        </button>
+        <button class="panel-tab-btn" id="tabGalleryType2Btn">
+          <span>Тип 2</span>
+          <span class="tab-badge" id="galleryType2Count">0</span>
+        </button>
+      </div>
+
+      <div class="side-panel-body">
+        <div class="tab-pane active" id="galleryType1Pane">
+          <div class="panel-empty-state">Завантаження зображень...</div>
+        </div>
+        <div class="tab-pane" id="galleryType2Pane">
+          <div class="panel-empty-state">Завантаження зображень...</div>
+        </div>
+      </div>
+    </aside>
+
     <div class="note-container">
       <div id="noteContent" class="markdown-body">
         <div class="state-message">
@@ -990,7 +1136,7 @@
       </div>
     </div>
 
-    <aside class="side-panel" id="sidePanel">
+    <aside class="side-panel right-panel" id="sidePanel">
       <div class="side-panel-header">
         <div class="side-panel-title">
           <span>📚 Довідник</span>
@@ -1020,16 +1166,15 @@
     </aside>
   </main>
 
-  <button class="docked-panel-tab" id="dockedPanelTab" title="Розгорнути довідник">
+  <button class="docked-panel-tab docked-left-tab" id="dockedGalleryTab" title="Розгорнути галерею">
+    <span>🖼️ Галерея</span>
+  </button>
+
+  <button class="docked-panel-tab docked-right-tab" id="dockedPanelTab" title="Розгорнути довідник">
     <span>📚 Довідник</span>
   </button>
 
   <div class="side-panel-overlay" id="sidePanelOverlay"></div>
-
-  <button class="mobile-panel-toggle" id="openSidePanelBtn" aria-label="Відкрити довідник">
-    <span>📚 Довідник</span>
-    <span class="toggle-badge" id="mobilePanelBadge">0</span>
-  </button>
 
   <script>
     const appState = {
@@ -1041,8 +1186,12 @@
       currentTerms: [],
       mainDatesSet: new Set(),
       activeSideTab: 'dates',
-      isMobilePanelOpen: false,
-      isSidePanelCollapsed: false
+      activeGalleryTab: 'Type1',
+      galleryItems: [],
+      isSidePanelCollapsed: false,
+      isGalleryCollapsed: false,
+      isMobileSideOpen: false,
+      isMobileGalleryOpen: false
     };
 
     const renderer = new marked.Renderer();
@@ -1095,18 +1244,18 @@
     }
 
     function toggleSidePanel(forceState) {
-      if (window.innerWidth <= 1024) {
+      if (window.innerWidth <= 1200) {
         if (typeof forceState === 'boolean') {
-          setMobilePanelOpen(!forceState);
+          setMobileSideOpen(!forceState);
         } else {
-          setMobilePanelOpen(!appState.isMobilePanelOpen);
+          setMobileSideOpen(!appState.isMobileSideOpen);
         }
         return;
       }
 
       const newState = typeof forceState === 'boolean' ? forceState : !appState.isSidePanelCollapsed;
       appState.isSidePanelCollapsed = newState;
-      document.body.classList.toggle('panel-collapsed', appState.isSidePanelCollapsed);
+      document.body.classList.toggle('right-panel-collapsed', appState.isSidePanelCollapsed);
 
       const toggleBtn = document.getElementById('toggleSidePanelBtn');
       if (toggleBtn) {
@@ -1114,39 +1263,82 @@
       }
     }
 
-    function setupSidePanel() {
-      const tabDatesBtn = document.getElementById('tabDatesBtn');
-      const tabTermsBtn = document.getElementById('tabTermsBtn');
-      const collapseBtn = document.getElementById('collapseSidePanelBtn');
-      const toggleBtn = document.getElementById('toggleSidePanelBtn');
-      const dockedTab = document.getElementById('dockedPanelTab');
-      const openBtn = document.getElementById('openSidePanelBtn');
-      const overlay = document.getElementById('sidePanelOverlay');
+    function toggleGalleryPanel(forceState) {
+      if (window.innerWidth <= 1200) {
+        if (typeof forceState === 'boolean') {
+          setMobileGalleryOpen(!forceState);
+        } else {
+          setMobileGalleryOpen(!appState.isMobileGalleryOpen);
+        }
+        return;
+      }
 
-      if (tabDatesBtn) {
-        tabDatesBtn.addEventListener('click', () => switchTab('dates'));
-      }
-      if (tabTermsBtn) {
-        tabTermsBtn.addEventListener('click', () => switchTab('terms'));
-      }
-      if (collapseBtn) {
-        collapseBtn.addEventListener('click', () => toggleSidePanel(true));
-      }
+      const newState = typeof forceState === 'boolean' ? forceState : !appState.isGalleryCollapsed;
+      appState.isGalleryCollapsed = newState;
+      document.body.classList.toggle('left-panel-collapsed', appState.isGalleryCollapsed);
+
+      const toggleBtn = document.getElementById('toggleGalleryBtn');
       if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => toggleSidePanel());
-      }
-      if (dockedTab) {
-        dockedTab.addEventListener('click', () => toggleSidePanel(false));
-      }
-      if (openBtn) {
-        openBtn.addEventListener('click', () => setMobilePanelOpen(true));
-      }
-      if (overlay) {
-        overlay.addEventListener('click', () => setMobilePanelOpen(false));
+        toggleBtn.classList.toggle('active', !appState.isGalleryCollapsed);
       }
     }
 
-    function switchTab(tabName) {
+    function setupSidePanels() {
+      const tabDatesBtn = document.getElementById('tabDatesBtn');
+      const tabTermsBtn = document.getElementById('tabTermsBtn');
+      const collapseSideBtn = document.getElementById('collapseSidePanelBtn');
+      const toggleSideBtn = document.getElementById('toggleSidePanelBtn');
+      const dockedSideTab = document.getElementById('dockedPanelTab');
+
+      const tabGalleryType1Btn = document.getElementById('tabGalleryType1Btn');
+      const tabGalleryType2Btn = document.getElementById('tabGalleryType2Btn');
+      const collapseGalleryBtn = document.getElementById('collapseGalleryBtn');
+      const toggleGalleryBtn = document.getElementById('toggleGalleryBtn');
+      const dockedGalleryTab = document.getElementById('dockedGalleryTab');
+
+      const overlay = document.getElementById('sidePanelOverlay');
+
+      if (tabDatesBtn) {
+        tabDatesBtn.addEventListener('click', () => switchSideTab('dates'));
+      }
+      if (tabTermsBtn) {
+        tabTermsBtn.addEventListener('click', () => switchSideTab('terms'));
+      }
+      if (collapseSideBtn) {
+        collapseSideBtn.addEventListener('click', () => toggleSidePanel(true));
+      }
+      if (toggleSideBtn) {
+        toggleSideBtn.addEventListener('click', () => toggleSidePanel());
+      }
+      if (dockedSideTab) {
+        dockedSideTab.addEventListener('click', () => toggleSidePanel(false));
+      }
+
+      if (tabGalleryType1Btn) {
+        tabGalleryType1Btn.addEventListener('click', () => switchGalleryTab('Type1'));
+      }
+      if (tabGalleryType2Btn) {
+        tabGalleryType2Btn.addEventListener('click', () => switchGalleryTab('Type2'));
+      }
+      if (collapseGalleryBtn) {
+        collapseGalleryBtn.addEventListener('click', () => toggleGalleryPanel(true));
+      }
+      if (toggleGalleryBtn) {
+        toggleGalleryBtn.addEventListener('click', () => toggleGalleryPanel());
+      }
+      if (dockedGalleryTab) {
+        dockedGalleryTab.addEventListener('click', () => toggleGalleryPanel(false));
+      }
+
+      if (overlay) {
+        overlay.addEventListener('click', () => {
+          setMobileSideOpen(false);
+          setMobileGalleryOpen(false);
+        });
+      }
+    }
+
+    function switchSideTab(tabName) {
       appState.activeSideTab = tabName;
       document.getElementById('tabDatesBtn').classList.toggle('active', tabName === 'dates');
       document.getElementById('tabTermsBtn').classList.toggle('active', tabName === 'terms');
@@ -1154,15 +1346,35 @@
       document.getElementById('termsTabPane').classList.toggle('active', tabName === 'terms');
     }
 
-    function setMobilePanelOpen(isOpen) {
-      appState.isMobilePanelOpen = isOpen;
-      const sidePanel = document.getElementById('sidePanel');
+    function switchGalleryTab(tabName) {
+      appState.activeGalleryTab = tabName;
+      document.getElementById('tabGalleryType1Btn').classList.toggle('active', tabName === 'Type1');
+      document.getElementById('tabGalleryType2Btn').classList.toggle('active', tabName === 'Type2');
+      document.getElementById('galleryType1Pane').classList.toggle('active', tabName === 'Type1');
+      document.getElementById('galleryType2Pane').classList.toggle('active', tabName === 'Type2');
+    }
+
+    function setMobileSideOpen(isOpen) {
+      appState.isMobileSideOpen = isOpen;
+      const panel = document.getElementById('sidePanel');
       const overlay = document.getElementById('sidePanelOverlay');
-      if (sidePanel) {
-        sidePanel.classList.toggle('is-open', isOpen);
+      if (panel) {
+        panel.classList.toggle('is-open', isOpen);
       }
       if (overlay) {
-        overlay.classList.toggle('is-visible', isOpen);
+        overlay.classList.toggle('is-visible', isOpen || appState.isMobileGalleryOpen);
+      }
+    }
+
+    function setMobileGalleryOpen(isOpen) {
+      appState.isMobileGalleryOpen = isOpen;
+      const panel = document.getElementById('galleryPanel');
+      const overlay = document.getElementById('sidePanelOverlay');
+      if (panel) {
+        panel.classList.toggle('is-open', isOpen);
+      }
+      if (overlay) {
+        overlay.classList.toggle('is-visible', isOpen || appState.isMobileSideOpen);
       }
     }
 
@@ -1236,7 +1448,9 @@
         appState.currentTopic = null;
         appState.currentDates = [];
         appState.currentTerms = [];
+        appState.galleryItems = [];
         renderSidePanel();
+        renderGalleryPanel();
         updatePathDisplay();
         showError(`Для блоку "${blockName}" не знайдено тем.`);
       }
@@ -1272,6 +1486,7 @@
       ]);
 
       bindTextInteractivity();
+      await loadGalleryImages(appState.currentBlock, appState.currentTopic);
     }
 
     function updatePathDisplay() {
@@ -1369,16 +1584,12 @@
       const termsPane = document.getElementById('termsTabPane');
       const datesCount = document.getElementById('datesCount');
       const termsCount = document.getElementById('termsCount');
-      const mobileBadge = document.getElementById('mobilePanelBadge');
 
       if (datesCount) {
         datesCount.textContent = appState.currentDates.length;
       }
       if (termsCount) {
         termsCount.textContent = appState.currentTerms.length;
-      }
-      if (mobileBadge) {
-        mobileBadge.textContent = appState.currentDates.length + appState.currentTerms.length;
       }
 
       if (datesPane) {
@@ -1452,12 +1663,269 @@
       return card;
     }
 
+    function testImageExists(url) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+      });
+    }
+
+    async function resolveImageCandidate(block, topic, name) {
+      const extensions = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
+      const candidates = [];
+      for (const ext of extensions) {
+        candidates.push({ type: 'Type1', url: `Images/Type1/${block}_${topic}_${name}.${ext}`, name: name });
+        candidates.push({ type: 'Type2', url: `Images/Type2/${block}_${topic}_${name}.${ext}`, name: name });
+      }
+
+      const checks = await Promise.all(
+        candidates.map(async c => ({ ...c, exists: await testImageExists(c.url) }))
+      );
+
+      return checks.find(c => c.exists) || null;
+    }
+
+    async function loadGalleryImages(block, topic) {
+      const noteContent = document.getElementById('noteContent');
+      if (!noteContent) return;
+
+      const galleryMap = new Map();
+
+      const noteImgs = noteContent.querySelectorAll('img');
+      noteImgs.forEach(img => {
+        const src = img.getAttribute('src') || '';
+        const match = src.match(/Images\/(Type1|Type2)\/(.+)$/i);
+        if (match) {
+          const rawType = match[1];
+          const type = rawType.toLowerCase() === 'type1' ? 'Type1' : 'Type2';
+          const filename = match[2];
+          const prefix = `${block}_${topic}_`;
+          let name = filename;
+          if (filename.startsWith(prefix)) {
+            name = filename.substring(prefix.length);
+          }
+          name = name.replace(/\.[^/.]+$/, "");
+
+          img.classList.add('interactive-note-image');
+          img.setAttribute('data-image-name', name.toLowerCase());
+          img.setAttribute('data-image-type', type);
+          img.setAttribute('title', 'Натисніть, щоб переглянути в галереї');
+
+          img.addEventListener('click', () => {
+            openGalleryToImage(name.toLowerCase(), type);
+          });
+
+          galleryMap.set(name.toLowerCase(), {
+            name: name,
+            type: type,
+            url: src
+          });
+        }
+      });
+
+      const boldItalics = noteContent.querySelectorAll('em strong, strong em');
+      const pendingNames = [];
+
+      boldItalics.forEach(el => {
+        const text = el.textContent.trim();
+        if (text && !galleryMap.has(text.toLowerCase())) {
+          pendingNames.push({ el, text });
+        }
+      });
+
+      for (const item of pendingNames) {
+        const resolved = await resolveImageCandidate(block, topic, item.text);
+        if (resolved) {
+          galleryMap.set(item.text.toLowerCase(), resolved);
+
+          item.el.classList.add('interactive-image-name');
+          item.el.setAttribute('data-image-name', item.text.toLowerCase());
+          item.el.setAttribute('data-image-type', resolved.type);
+          item.el.setAttribute('title', 'Натисніть, щоб відкрити зображення в галереї');
+
+          item.el.addEventListener('click', () => {
+            openGalleryToImage(item.text.toLowerCase(), resolved.type);
+          });
+        }
+      }
+
+      appState.galleryItems = Array.from(galleryMap.values());
+      renderGalleryPanel();
+    }
+
+    function renderGalleryPanel() {
+      const type1Pane = document.getElementById('galleryType1Pane');
+      const type2Pane = document.getElementById('galleryType2Pane');
+      const type1Count = document.getElementById('galleryType1Count');
+      const type2Count = document.getElementById('galleryType2Count');
+
+      const type1Items = appState.galleryItems.filter(i => i.type === 'Type1');
+      const type2Items = appState.galleryItems.filter(i => i.type === 'Type2');
+
+      if (type1Count) {
+        type1Count.textContent = type1Items.length;
+      }
+      if (type2Count) {
+        type2Count.textContent = type2Items.length;
+      }
+
+      if (type1Pane) {
+        type1Pane.innerHTML = '';
+        if (type1Items.length === 0) {
+          type1Pane.innerHTML = '<div class="panel-empty-state">Немає зображень Типу 1</div>';
+        } else {
+          type1Items.forEach(item => {
+            type1Pane.appendChild(createGalleryCard(item));
+          });
+        }
+      }
+
+      if (type2Pane) {
+        type2Pane.innerHTML = '';
+        if (type2Items.length === 0) {
+          type2Pane.innerHTML = '<div class="panel-empty-state">Немає зображень Типу 2</div>';
+        } else {
+          type2Items.forEach(item => {
+            type2Pane.appendChild(createGalleryCard(item));
+          });
+        }
+      }
+    }
+
+    function createGalleryCard(item) {
+      const card = document.createElement('div');
+      card.className = 'gallery-card';
+      card.setAttribute('data-name', item.name.toLowerCase());
+      card.setAttribute('data-type', item.type);
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'gallery-img-wrap';
+
+      const img = document.createElement('img');
+      img.src = item.url;
+      img.alt = item.name;
+      img.loading = 'lazy';
+
+      imgWrap.appendChild(img);
+
+      const caption = document.createElement('div');
+      caption.className = 'gallery-caption';
+      caption.textContent = item.name;
+
+      card.appendChild(imgWrap);
+      card.appendChild(caption);
+
+      card.addEventListener('click', () => {
+        scrollToNoteImage(item.name, item.type, card);
+      });
+
+      return card;
+    }
+
+    function openGalleryToImage(name, type) {
+      if (appState.isGalleryCollapsed) {
+        toggleGalleryPanel(false);
+      }
+      if (window.innerWidth <= 1200 && !appState.isMobileGalleryOpen) {
+        setMobileGalleryOpen(true);
+      }
+      switchGalleryTab(type);
+
+      const pane = document.getElementById(type === 'Type1' ? 'galleryType1Pane' : 'galleryType2Pane');
+      if (!pane) return;
+
+      const cards = pane.querySelectorAll('.gallery-card');
+      let targetCard = null;
+      cards.forEach(card => {
+        if (card.getAttribute('data-name') === name.toLowerCase()) {
+          targetCard = card;
+          card.classList.add('is-highlighted');
+          setTimeout(() => {
+            card.classList.remove('is-highlighted');
+          }, 1800);
+        } else {
+          card.classList.remove('is-highlighted');
+        }
+      });
+
+      if (targetCard) {
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function scrollToNoteImage(name, type, card) {
+      const noteContent = document.getElementById('noteContent');
+      if (!noteContent) return;
+
+      const lowerName = name.toLowerCase();
+
+      const noteImgs = noteContent.querySelectorAll('img');
+      let targetImg = null;
+      for (let i = 0; i < noteImgs.length; i++) {
+        const attrName = noteImgs[i].getAttribute('data-image-name') || '';
+        const src = noteImgs[i].getAttribute('src') || '';
+        if (attrName === lowerName || src.toLowerCase().includes(lowerName)) {
+          targetImg = noteImgs[i];
+          break;
+        }
+      }
+
+      if (targetImg) {
+        document.querySelectorAll('.img-flash-highlight').forEach(el => el.classList.remove('img-flash-highlight'));
+        targetImg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetImg.classList.add('img-flash-highlight');
+        setTimeout(() => {
+          targetImg.classList.remove('img-flash-highlight');
+        }, 2800);
+        return;
+      }
+
+      const textMatches = noteContent.querySelectorAll('.interactive-image-name');
+      let targetText = null;
+      for (let i = 0; i < textMatches.length; i++) {
+        if ((textMatches[i].getAttribute('data-image-name') || '') === lowerName) {
+          targetText = textMatches[i];
+          break;
+        }
+      }
+
+      if (!targetText) {
+        const allEmStrong = noteContent.querySelectorAll('em strong, strong em');
+        for (let i = 0; i < allEmStrong.length; i++) {
+          if (allEmStrong[i].textContent.trim().toLowerCase() === lowerName) {
+            targetText = allEmStrong[i];
+            break;
+          }
+        }
+      }
+
+      if (targetText) {
+        document.querySelectorAll('.text-flash-highlight').forEach(el => el.classList.remove('text-flash-highlight'));
+        targetText.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetText.classList.add('text-flash-highlight');
+        setTimeout(() => {
+          targetText.classList.remove('text-flash-highlight');
+        }, 2800);
+        return;
+      }
+
+      if (card) {
+        card.classList.add('shake-card');
+        setTimeout(() => {
+          card.classList.remove('shake-card');
+        }, 400);
+      }
+    }
+
     function bindTextInteractivity() {
       const noteContent = document.getElementById('noteContent');
       if (!noteContent) return;
 
       const emElements = noteContent.querySelectorAll('em');
       emElements.forEach(em => {
+        if (em.querySelector('strong')) return;
         const text = em.textContent.trim().toLowerCase();
         let matchedDate = null;
 
@@ -1479,8 +1947,8 @@
             if (appState.isSidePanelCollapsed) {
               toggleSidePanel(false);
             }
-            if (window.innerWidth <= 1024 && !appState.isMobilePanelOpen) {
-              setMobilePanelOpen(true);
+            if (window.innerWidth <= 1200 && !appState.isMobileSideOpen) {
+              setMobileSideOpen(true);
             }
             activateSideItem(matchedDate.key.trim().toLowerCase(), 'dates');
           });
@@ -1489,6 +1957,7 @@
 
       const strongElements = noteContent.querySelectorAll('strong');
       strongElements.forEach(strong => {
+        if (strong.querySelector('em')) return;
         const text = strong.textContent.trim().toLowerCase();
         let matchedTerm = null;
 
@@ -1510,8 +1979,8 @@
             if (appState.isSidePanelCollapsed) {
               toggleSidePanel(false);
             }
-            if (window.innerWidth <= 1024 && !appState.isMobilePanelOpen) {
-              setMobilePanelOpen(true);
+            if (window.innerWidth <= 1200 && !appState.isMobileSideOpen) {
+              setMobileSideOpen(true);
             }
             activateSideItem(matchedTerm.key.trim().toLowerCase(), 'terms');
           });
@@ -1520,9 +1989,9 @@
     }
 
     function activateSideItem(key, type) {
-      switchTab(type);
-      if (window.innerWidth <= 1024) {
-        setMobilePanelOpen(true);
+      switchSideTab(type);
+      if (window.innerWidth <= 1200) {
+        setMobileSideOpen(true);
       }
       const pane = document.getElementById(type === 'dates' ? 'datesTabPane' : 'termsTabPane');
       if (!pane) return;
@@ -1651,7 +2120,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       setupToggleNav();
-      setupSidePanel();
+      setupSidePanels();
       loadConfig();
     });
   </script>
