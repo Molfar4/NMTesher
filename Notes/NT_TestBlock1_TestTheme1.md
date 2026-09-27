@@ -5,6 +5,6 @@ qwertyqwerty ___ExampleName2___ qwertyqwerty
 qwertyqwrtyqwertyqwerty __SomeTerm__
 --- 
 qwertyqwerrtyqwerty
-![qwerty](/Images/Type1/TestBlock1_TestTheme1_ExampleName1.png)
+![qwerty](/Images/maps/TestBlock1_TestTheme1_ExampleName1.png)
 qwertyqwerty
 `SomePerson1`

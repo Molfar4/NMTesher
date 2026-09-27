@@ -139,6 +139,18 @@
       color: var(--c-primary-dark);
     }
 
+    .add-note-nav-btn {
+      background: var(--c-primary);
+      color: #FFFFFF;
+      border-color: var(--c-primary-dark);
+    }
+
+    .add-note-nav-btn:hover {
+      background: var(--c-primary-dark);
+      color: #FFFFFF;
+      border-color: var(--c-primary-dark);
+    }
+
     .toggle-nav-btn .toggle-icon {
       font-size: 0.68rem;
       transition: transform 0.25s ease;
@@ -195,9 +207,25 @@
 
     .chips-group {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
       gap: 8px;
       align-items: center;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--c-border) transparent;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chips-group::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .chips-group::-webkit-scrollbar-thumb {
+      background: var(--c-border);
+      border-radius: 4px;
     }
 
     .chip {
@@ -214,6 +242,8 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .chip:hover {
@@ -1054,6 +1084,7 @@
       background: var(--c-bg-paper);
       border-bottom: 1px solid var(--c-border);
       overflow-x: auto;
+      scrollbar-width: thin;
     }
 
     .person-block-tab-btn {
@@ -1232,6 +1263,212 @@
       color: var(--c-text-dark);
     }
 
+    .form-group {
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--c-border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.92rem;
+      color: var(--c-text-dark);
+      background: var(--c-surface);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 3px rgba(159, 109, 45, 0.15);
+    }
+
+    .form-textarea {
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      line-height: 1.5;
+      resize: vertical;
+      min-height: 180px;
+    }
+
+    .primary-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--c-primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 11px 22px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .primary-action-btn:hover {
+      background: var(--c-primary-dark);
+      box-shadow: 0 4px 12px rgba(98, 70, 33, 0.25);
+    }
+
+    .secondary-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      color: var(--c-slate-blue);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .secondary-action-btn:hover {
+      background: var(--c-accent-peach);
+      color: var(--c-primary-dark);
+      border-color: var(--c-primary);
+    }
+
+    .scan-summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--c-bg-paper);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid var(--c-border);
+    }
+
+    .scan-stat-chip {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .scan-section {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .scan-section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .scan-item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .scan-item-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .scan-tag-key {
+      font-size: 0.86rem;
+      font-weight: 700;
+      background: var(--c-bg-paper);
+      border: 1px solid var(--c-border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      min-width: 140px;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+
+    .scan-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .scan-card-item {
+      background: var(--c-bg-paper);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .scan-card-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      word-break: break-word;
+    }
+
+    .file-input-custom {
+      font-size: 0.82rem;
+      color: var(--c-text-dark);
+    }
+
+    .save-status-msg {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .save-status-msg.success {
+      background: rgba(46, 125, 50, 0.12);
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+
+    .save-status-msg.error {
+      background: rgba(233, 60, 53, 0.12);
+      color: var(--c-accent-red);
+      border: 1px solid #ef9a9a;
+    }
+
     @media (max-width: 1200px) {
       body.left-panel-collapsed .docked-left-tab,
       body.right-panel-collapsed .docked-right-tab {
@@ -1338,6 +1575,14 @@
       .persons-grid-view {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
       }
+      .scan-item-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .scan-tag-key {
+        max-width: 100%;
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -1356,6 +1601,11 @@
           <span class="divider">/</span>
           <span id="activeTopicLabel">—</span>
         </div>
+
+        <button id="openAddNoteBtn" class="toggle-nav-btn add-note-nav-btn" aria-label="Додати конспект" title="Створити новий конспект">
+          <span>➕</span>
+          <span>Конспект</span>
+        </button>
 
         <button id="openPersonsBtn" class="toggle-nav-btn" aria-label="Відкрити список людей" title="Видатні постаті">
           <span>👤</span>
@@ -1404,22 +1654,22 @@
       </div>
 
       <div class="side-panel-tabs">
-        <button class="panel-tab-btn active" id="tabGalleryType1Btn">
-          <span>Тип 1</span>
-          <span class="tab-badge" id="galleryType1Count">0</span>
+        <button class="panel-tab-btn active" id="tabGalleryMapsBtn">
+          <span>Карти</span>
+          <span class="tab-badge" id="galleryMapsCount">0</span>
         </button>
-        <button class="panel-tab-btn" id="tabGalleryType2Btn">
-          <span>Тип 2</span>
-          <span class="tab-badge" id="galleryType2Count">0</span>
+        <button class="panel-tab-btn" id="tabGalleryMonumentsBtn">
+          <span>Пам'ятки</span>
+          <span class="tab-badge" id="galleryMonumentsCount">0</span>
         </button>
       </div>
 
       <div class="side-panel-body">
-        <div class="tab-pane active" id="galleryType1Pane">
-          <div class="panel-empty-state">Завантаження зображень...</div>
+        <div class="tab-pane active" id="galleryMapsPane">
+          <div class="panel-empty-state">Завантаження карт...</div>
         </div>
-        <div class="tab-pane" id="galleryType2Pane">
-          <div class="panel-empty-state">Завантаження зображень...</div>
+        <div class="tab-pane" id="galleryMonumentsPane">
+          <div class="panel-empty-state">Завантаження пам'яток...</div>
         </div>
       </div>
     </aside>
@@ -1507,7 +1757,86 @@
     </div>
   </div>
 
+  <div class="persons-modal-overlay" id="addNoteModalOverlay">
+    <div class="persons-modal" id="addNoteModal" style="max-width: 920px;">
+      <div class="persons-modal-header">
+        <div class="persons-modal-title">
+          <span>📝 Додати новий конспект</span>
+        </div>
+        <button class="persons-modal-close" id="closeAddNoteModalBtn" aria-label="Закрити">&times;</button>
+      </div>
+
+      <div class="persons-modal-body">
+        <div id="addNoteStep1">
+          <div class="form-group">
+            <label class="form-label">Блок конспекту:</label>
+            <select class="form-select" id="addNoteBlockSelect">
+            </select>
+            <input type="text" class="form-input" id="addNoteCustomBlockInput" placeholder="Введіть назву нового блоку" style="display: none; margin-top: 6px;" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Назва теми:</label>
+            <input type="text" class="form-input" id="addNoteTopicInput" placeholder="Наприклад: Тема1 або НазваТеми" />
+          </div>
+
+          <div class="form-group">
+            <div class="form-label">
+              <span>Текст конспекту (Markdown):</span>
+              <button class="secondary-action-btn" id="uploadMdFileBtn" type="button">📁 Завантажити .md файл</button>
+              <input type="file" id="mdFileInput" accept=".md,.markdown,.txt" style="display: none;" />
+            </div>
+            <textarea class="form-textarea" id="addNoteMarkdownText" placeholder="Вставте сюди текст конспекту з Markdown-розміткою..."></textarea>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button class="primary-action-btn" id="startScanBtn" type="button">🔍 Просканувати конспект</button>
+          </div>
+        </div>
+
+        <div id="addNoteStep2" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <button class="person-back-btn" id="backToStep1Btn" type="button">← Повернутися до редагування тексту</button>
+          </div>
+
+          <div class="scan-summary-bar" id="scanSummaryBar">
+          </div>
+
+          <div class="scan-section" id="scanDatesSection" style="display: none;">
+            <div class="scan-section-title">📅 Дати (з курсиву _..._):</div>
+            <div id="scanDatesList"></div>
+          </div>
+
+          <div class="scan-section" id="scanTermsSection" style="display: none;">
+            <div class="scan-section-title">📖 Терміни (з жирного __...__):</div>
+            <div id="scanTermsList"></div>
+          </div>
+
+          <div class="scan-section" id="scanImagesSection" style="display: none;">
+            <div class="scan-section-title">🖼️ Зображення (Карти та Пам'ятки з !___...___, ___...___ або ![...](...)):</div>
+            <div class="scan-card-grid" id="scanImagesList"></div>
+          </div>
+
+          <div class="scan-section" id="scanPersonsSection" style="display: none;">
+            <div class="scan-section-title">👤 Видатні постаті (з `код`):</div>
+            <div class="scan-card-grid" id="scanPersonsList"></div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+            <button class="primary-action-btn" id="saveAllFilesBtn" type="button">💾 Зберегти всі файли у проект</button>
+          </div>
+
+          <div class="save-status-msg" id="saveStatusMsg" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    const ALLOW_ADDING_NOTES = true;
+
+    let projectDirHandle = null;
+
     const appState = {
       blocks: [],
       topicsMap: {},
@@ -1517,7 +1846,7 @@
       currentTerms: [],
       mainDatesSet: new Set(),
       activeSideTab: 'dates',
-      activeGalleryTab: 'Type1',
+      activeGalleryTab: 'maps',
       galleryItems: [],
       personsMap: {},
       allPersonsByName: new Map(),
@@ -1525,7 +1854,8 @@
       isSidePanelCollapsed: false,
       isGalleryCollapsed: false,
       isMobileSideOpen: false,
-      isMobileGalleryOpen: false
+      isMobileGalleryOpen: false,
+      currentScanData: null
     };
 
     const renderer = new marked.Renderer();
@@ -1624,8 +1954,8 @@
       const toggleSideBtn = document.getElementById('toggleSidePanelBtn');
       const dockedSideTab = document.getElementById('dockedPanelTab');
 
-      const tabGalleryType1Btn = document.getElementById('tabGalleryType1Btn');
-      const tabGalleryType2Btn = document.getElementById('tabGalleryType2Btn');
+      const tabGalleryMapsBtn = document.getElementById('tabGalleryMapsBtn');
+      const tabGalleryMonumentsBtn = document.getElementById('tabGalleryMonumentsBtn');
       const collapseGalleryBtn = document.getElementById('collapseGalleryBtn');
       const toggleGalleryBtn = document.getElementById('toggleGalleryBtn');
       const dockedGalleryTab = document.getElementById('dockedGalleryTab');
@@ -1653,11 +1983,11 @@
         dockedSideTab.addEventListener('click', () => toggleSidePanel(false));
       }
 
-      if (tabGalleryType1Btn) {
-        tabGalleryType1Btn.addEventListener('click', () => switchGalleryTab('Type1'));
+      if (tabGalleryMapsBtn) {
+        tabGalleryMapsBtn.addEventListener('click', () => switchGalleryTab('maps'));
       }
-      if (tabGalleryType2Btn) {
-        tabGalleryType2Btn.addEventListener('click', () => switchGalleryTab('Type2'));
+      if (tabGalleryMonumentsBtn) {
+        tabGalleryMonumentsBtn.addEventListener('click', () => switchGalleryTab('monuments'));
       }
       if (collapseGalleryBtn) {
         collapseGalleryBtn.addEventListener('click', () => toggleGalleryPanel(true));
@@ -1684,10 +2014,6 @@
         personBackBtn.addEventListener('click', showPersonsGrid);
       }
 
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closePersonsModal();
-      });
-
       if (overlay) {
         overlay.addEventListener('click', () => {
           setMobileSideOpen(false);
@@ -1705,11 +2031,16 @@
     }
 
     function switchGalleryTab(tabName) {
-      appState.activeGalleryTab = tabName;
-      document.getElementById('tabGalleryType1Btn').classList.toggle('active', tabName === 'Type1');
-      document.getElementById('tabGalleryType2Btn').classList.toggle('active', tabName === 'Type2');
-      document.getElementById('galleryType1Pane').classList.toggle('active', tabName === 'Type1');
-      document.getElementById('galleryType2Pane').classList.toggle('active', tabName === 'Type2');
+      const normalized = (tabName === 'monuments' || tabName === 'Type2') ? 'monuments' : 'maps';
+      appState.activeGalleryTab = normalized;
+      const mapsBtn = document.getElementById('tabGalleryMapsBtn');
+      const monBtn = document.getElementById('tabGalleryMonumentsBtn');
+      const mapsPane = document.getElementById('galleryMapsPane');
+      const monPane = document.getElementById('galleryMonumentsPane');
+      if (mapsBtn) mapsBtn.classList.toggle('active', normalized === 'maps');
+      if (monBtn) monBtn.classList.toggle('active', normalized === 'monuments');
+      if (mapsPane) mapsPane.classList.toggle('active', normalized === 'maps');
+      if (monPane) monPane.classList.toggle('active', normalized === 'monuments');
     }
 
     function setMobileSideOpen(isOpen) {
@@ -1923,6 +2254,537 @@
       if (detailView) detailView.style.display = 'none';
     }
 
+    function setupAddNoteModal() {
+      const openBtn = document.getElementById('openAddNoteBtn');
+      const closeBtn = document.getElementById('closeAddNoteModalBtn');
+      const overlay = document.getElementById('addNoteModalOverlay');
+      const blockSelect = document.getElementById('addNoteBlockSelect');
+      const customBlockInput = document.getElementById('addNoteCustomBlockInput');
+      const uploadFileBtn = document.getElementById('uploadMdFileBtn');
+      const fileInput = document.getElementById('mdFileInput');
+      const textarea = document.getElementById('addNoteMarkdownText');
+      const startScanBtn = document.getElementById('startScanBtn');
+      const backBtn = document.getElementById('backToStep1Btn');
+      const saveBtn = document.getElementById('saveAllFilesBtn');
+
+      if (!ALLOW_ADDING_NOTES) {
+        if (openBtn) openBtn.style.display = 'none';
+        return;
+      }
+
+      if (openBtn) {
+        openBtn.addEventListener('click', openAddNoteModal);
+      }
+      if (closeBtn) {
+        closeBtn.addEventListener('click', closeAddNoteModal);
+      }
+      if (overlay) {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) closeAddNoteModal();
+        });
+      }
+
+      if (blockSelect) {
+        blockSelect.addEventListener('change', () => {
+          if (customBlockInput) {
+            customBlockInput.style.display = blockSelect.value === '__NEW__' ? 'block' : 'none';
+          }
+        });
+      }
+
+      if (uploadFileBtn && fileInput) {
+        uploadFileBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', async () => {
+          if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const text = await file.text();
+            if (textarea) textarea.value = text;
+            const topicInput = document.getElementById('addNoteTopicInput');
+            if (topicInput && !topicInput.value) {
+              const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/^NT_[^_]+_/, "").replace(/^NT_/, "");
+              topicInput.value = baseName;
+            }
+          }
+        });
+      }
+
+      if (startScanBtn) {
+        startScanBtn.addEventListener('click', runScanStep);
+      }
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          document.getElementById('addNoteStep1').style.display = 'block';
+          document.getElementById('addNoteStep2').style.display = 'none';
+        });
+      }
+      if (saveBtn) {
+        saveBtn.addEventListener('click', saveNewNoteAndFiles);
+      }
+    }
+
+    function openAddNoteModal() {
+      const overlay = document.getElementById('addNoteModalOverlay');
+      if (overlay) overlay.classList.add('is-visible');
+
+      const blockSelect = document.getElementById('addNoteBlockSelect');
+      const customInput = document.getElementById('addNoteCustomBlockInput');
+      if (blockSelect) {
+        blockSelect.innerHTML = '';
+        appState.blocks.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b;
+          opt.textContent = b;
+          if (b === appState.currentBlock) opt.selected = true;
+          blockSelect.appendChild(opt);
+        });
+        const newOpt = document.createElement('option');
+        newOpt.value = '__NEW__';
+        newOpt.textContent = '+ Створити новий блок...';
+        blockSelect.appendChild(newOpt);
+
+        if (customInput) customInput.style.display = 'none';
+      }
+
+      document.getElementById('addNoteStep1').style.display = 'block';
+      document.getElementById('addNoteStep2').style.display = 'none';
+      document.getElementById('saveStatusMsg').style.display = 'none';
+    }
+
+    function closeAddNoteModal() {
+      const overlay = document.getElementById('addNoteModalOverlay');
+      if (overlay) overlay.classList.remove('is-visible');
+    }
+
+    function scanMarkdownContent(markdownText) {
+      const dates = new Set();
+      const terms = new Set();
+      const persons = new Set();
+      const images = new Map();
+
+      const inlineExclRegex = /!___([^\r\n]+?)___/g;
+      let m;
+      while ((m = inlineExclRegex.exec(markdownText)) !== null) {
+        const name = m[1].trim();
+        if (name && !images.has(name.toLowerCase())) {
+          images.set(name.toLowerCase(), {
+            name: name,
+            type: 'maps',
+            showInNote: true,
+            rawSyntax: m[0]
+          });
+        }
+      }
+
+      let strippedForMentions = markdownText.replace(/!___[^\r\n]+?___/g, ' ');
+      const mentionRegex = /___([^\r\n]+?)___/g;
+      while ((m = mentionRegex.exec(strippedForMentions)) !== null) {
+        const name = m[1].trim();
+        if (name && !images.has(name.toLowerCase())) {
+          images.set(name.toLowerCase(), {
+            name: name,
+            type: 'monuments',
+            showInNote: false,
+            rawSyntax: m[0]
+          });
+        }
+      }
+
+      const standardImgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+      while ((m = standardImgRegex.exec(markdownText)) !== null) {
+        const alt = m[1].trim();
+        const src = m[2].trim();
+        const match = src.match(/Images\/(maps|monuments|Type1|Type2)\/(.+)$/i);
+        let name = alt || 'image';
+        let detectedType = 'maps';
+        if (match) {
+          detectedType = (match[1].toLowerCase() === 'monuments' || match[1].toLowerCase() === 'type2') ? 'monuments' : 'maps';
+          name = match[2].replace(/\.[^/.]+$/, "");
+          const prefixMatch = name.match(/^[A-Za-z0-9]+_[A-Za-z0-9]+_(.+)$/);
+          if (prefixMatch) name = prefixMatch[1];
+        }
+        if (name && !images.has(name.toLowerCase())) {
+          images.set(name.toLowerCase(), {
+            name: name,
+            type: detectedType,
+            showInNote: true,
+            rawSyntax: m[0],
+            rawHref: src
+          });
+        }
+      }
+
+      let textWithoutImages = markdownText
+        .replace(/!___[^\r\n]+?___/g, ' ')
+        .replace(/___[^\r\n]+?___/g, ' ')
+        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, ' ');
+
+      const codeRegex = /`([^`\r\n]+)`/g;
+      while ((m = codeRegex.exec(textWithoutImages)) !== null) {
+        const pName = m[1].trim();
+        if (pName) persons.add(pName);
+      }
+      let textWithoutPersons = textWithoutImages.replace(/`([^`\r\n]+)`/g, ' ');
+
+      const termRegex = /__([^\r\n]+?)__/g;
+      while ((m = termRegex.exec(textWithoutPersons)) !== null) {
+        const termVal = m[1].trim();
+        if (termVal && !images.has(termVal.toLowerCase())) {
+          terms.add(termVal);
+        }
+      }
+      let textWithoutTerms = textWithoutPersons.replace(/__([^\r\n]+?)__/g, ' ');
+
+      const dateRegex = /_([^\r\n]+?)_/g;
+      while ((m = dateRegex.exec(textWithoutTerms)) !== null) {
+        const dateVal = m[1].trim();
+        if (dateVal && !images.has(dateVal.toLowerCase()) && !terms.has(dateVal)) {
+          dates.add(dateVal);
+        }
+      }
+
+      return {
+        dates: Array.from(dates),
+        terms: Array.from(terms),
+        persons: Array.from(persons),
+        images: Array.from(images.values())
+      };
+    }
+
+    function getSelectedBlockName() {
+      const blockSelect = document.getElementById('addNoteBlockSelect');
+      const customInput = document.getElementById('addNoteCustomBlockInput');
+      if (blockSelect.value === '__NEW__') {
+        return (customInput.value || '').trim();
+      }
+      return blockSelect.value;
+    }
+
+    function runScanStep() {
+      const blockName = getSelectedBlockName();
+      const topicInput = document.getElementById('addNoteTopicInput');
+      const textarea = document.getElementById('addNoteMarkdownText');
+
+      if (!blockName) {
+        alert('Будь ласка, оберіть або введіть назву блоку.');
+        return;
+      }
+
+      const topicName = (topicInput.value || '').trim();
+      if (!topicName) {
+        alert('Будь ласка, введіть назву теми.');
+        return;
+      }
+
+      const markdownText = textarea.value || '';
+      if (!markdownText.trim()) {
+        alert('Будь ласка, введіть або завантажте Markdown-текст конспекту.');
+        return;
+      }
+
+      const scanResult = scanMarkdownContent(markdownText);
+      appState.currentScanData = {
+        block: blockName,
+        topic: topicName,
+        markdown: markdownText,
+        ...scanResult
+      };
+
+      renderScanResultsUI(appState.currentScanData);
+
+      document.getElementById('addNoteStep1').style.display = 'none';
+      document.getElementById('addNoteStep2').style.display = 'block';
+    }
+
+    function renderScanResultsUI(data) {
+      const summaryBar = document.getElementById('scanSummaryBar');
+      summaryBar.innerHTML = `
+        <div class="scan-stat-chip">Блок: ${escapeHtml(data.block)}</div>
+        <div class="scan-stat-chip">Тема: ${escapeHtml(data.topic)}</div>
+        <div class="scan-stat-chip">📅 Дат: ${data.dates.length}</div>
+        <div class="scan-stat-chip">📖 Термінів: ${data.terms.length}</div>
+        <div class="scan-stat-chip">🖼️ Зображень: ${data.images.length}</div>
+        <div class="scan-stat-chip">👤 Постатей: ${data.persons.length}</div>
+      `;
+
+      const datesSection = document.getElementById('scanDatesSection');
+      const datesList = document.getElementById('scanDatesList');
+      datesList.innerHTML = '';
+      if (data.dates.length > 0) {
+        datesSection.style.display = 'block';
+        data.dates.forEach(d => {
+          const row = document.createElement('div');
+          row.className = 'scan-item-row';
+          row.innerHTML = `
+            <span class="scan-tag-key" title="${escapeHtml(d)}">${escapeHtml(d)}</span>
+            <input type="text" class="form-input scan-date-input" data-key="${escapeHtml(d)}" placeholder="Пов'язана подія / опис дати..." />
+          `;
+          datesList.appendChild(row);
+        });
+      } else {
+        datesSection.style.display = 'none';
+      }
+
+      const termsSection = document.getElementById('scanTermsSection');
+      const termsList = document.getElementById('scanTermsList');
+      termsList.innerHTML = '';
+      if (data.terms.length > 0) {
+        termsSection.style.display = 'block';
+        data.terms.forEach(t => {
+          const row = document.createElement('div');
+          row.className = 'scan-item-row';
+          row.innerHTML = `
+            <span class="scan-tag-key" title="${escapeHtml(t)}">${escapeHtml(t)}</span>
+            <input type="text" class="form-input scan-term-input" data-key="${escapeHtml(t)}" placeholder="Визначення терміну..." />
+          `;
+          termsList.appendChild(row);
+        });
+      } else {
+        termsSection.style.display = 'none';
+      }
+
+      const imagesSection = document.getElementById('scanImagesSection');
+      const imagesList = document.getElementById('scanImagesList');
+      imagesList.innerHTML = '';
+      if (data.images.length > 0) {
+        imagesSection.style.display = 'block';
+        data.images.forEach(img => {
+          const card = document.createElement('div');
+          card.className = 'scan-card-item';
+          const displayBadge = img.showInNote 
+            ? '<span style="background: rgba(46,125,50,0.15); color: #2e7d32; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Показувати в конспекті (!)</span>' 
+            : '<span style="background: rgba(25,118,210,0.15); color: #1565c0; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Тільки в галереї</span>';
+          card.innerHTML = `
+            <div class="scan-card-title" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>🖼️ ${escapeHtml(img.name)}</span>
+              ${displayBadge}
+            </div>
+            <select class="form-select scan-img-type-select" data-name="${escapeHtml(img.name)}">
+              <option value="maps"${img.type === 'maps' ? ' selected' : ''}>Карти (Images/maps)</option>
+              <option value="monuments"${img.type === 'monuments' ? ' selected' : ''}>Пам'ятки (Images/monuments)</option>
+            </select>
+            <input type="file" class="file-input-custom scan-img-file" data-name="${escapeHtml(img.name)}" accept="image/*" />
+          `;
+          imagesList.appendChild(card);
+        });
+      } else {
+        imagesSection.style.display = 'none';
+      }
+
+      const personsSection = document.getElementById('scanPersonsSection');
+      const personsList = document.getElementById('scanPersonsList');
+      personsList.innerHTML = '';
+      if (data.persons.length > 0) {
+        personsSection.style.display = 'block';
+        data.persons.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'scan-card-item';
+          const existingData = appState.allPersonsByName.get(p.trim().toLowerCase());
+          const existingBio = existingData ? existingData.person.bio : '';
+          const hasExistingPhoto = existingData && existingData.person.imageUrl;
+
+          card.innerHTML = `
+            <div class="scan-card-title">👤 ${escapeHtml(p)}</div>
+            <textarea class="form-input scan-person-bio" data-name="${escapeHtml(p)}" style="min-height: 80px;" placeholder="Біографія особи...">${escapeHtml(existingBio)}</textarea>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 4px;">
+                ${hasExistingPhoto ? 'Портрет (вже завантажено, можна замінити):' : 'Завантажити фото портрета:'}
+              </label>
+              <input type="file" class="file-input-custom scan-person-photo" data-name="${escapeHtml(p)}" accept="image/*" />
+            </div>
+          `;
+          personsList.appendChild(card);
+        });
+      } else {
+        personsSection.style.display = 'none';
+      }
+    }
+
+    async function getProjectDirectoryHandle() {
+      if (projectDirHandle) return projectDirHandle;
+      if (!window.showDirectoryPicker) {
+        throw new Error('Ваш браузер не підтримує File System Access API. Будь ласка, використовуйте Chrome або Edge.');
+      }
+      projectDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      return projectDirHandle;
+    }
+
+    async function writeTextFileToProject(dirHandle, subfolder, filename, content) {
+      let targetDir = dirHandle;
+      if (subfolder) {
+        const parts = subfolder.split('/');
+        for (const p of parts) {
+          if (p) targetDir = await targetDir.getDirectoryHandle(p, { create: true });
+        }
+      }
+      const fileHandle = await targetDir.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    }
+
+    async function writeBlobFileToProject(dirHandle, subfolder, filename, blob) {
+      let targetDir = dirHandle;
+      if (subfolder) {
+        const parts = subfolder.split('/');
+        for (const p of parts) {
+          if (p) targetDir = await targetDir.getDirectoryHandle(p, { create: true });
+        }
+      }
+      const fileHandle = await targetDir.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    }
+
+    async function readTextFileFromProject(dirHandle, subfolder, filename) {
+      try {
+        let targetDir = dirHandle;
+        if (subfolder) {
+          const parts = subfolder.split('/');
+          for (const p of parts) {
+            if (p) targetDir = await targetDir.getDirectoryHandle(p);
+          }
+        }
+        const fileHandle = await targetDir.getFileHandle(filename);
+        const file = await fileHandle.getFile();
+        return await file.text();
+      } catch (err) {
+        return null;
+      }
+    }
+
+    async function saveNewNoteAndFiles() {
+      const data = appState.currentScanData;
+      if (!data) return;
+
+      const saveStatus = document.getElementById('saveStatusMsg');
+      saveStatus.style.display = 'block';
+      saveStatus.className = 'save-status-msg';
+      saveStatus.textContent = 'Очікування вибору папки проекту...';
+
+      try {
+        const dirHandle = await getProjectDirectoryHandle();
+        saveStatus.textContent = 'Збереження файлів...';
+
+        const block = data.block;
+        const topic = data.topic;
+
+        let finalMarkdown = data.markdown;
+
+        const dateInputs = document.querySelectorAll('.scan-date-input');
+        const dateLines = [];
+        dateInputs.forEach(input => {
+          const key = input.getAttribute('data-key');
+          const val = input.value.trim();
+          dateLines.push(`${key} || ${val}`);
+        });
+        await writeTextFileToProject(dirHandle, 'Dates', `DT_${block}_${topic}.md`, dateLines.join('\n'));
+
+        const termInputs = document.querySelectorAll('.scan-term-input');
+        const termLines = [];
+        termInputs.forEach(input => {
+          const key = input.getAttribute('data-key');
+          const val = input.value.trim();
+          termLines.push(`${key} || ${val}`);
+        });
+        await writeTextFileToProject(dirHandle, 'Terms', `TM_${block}_${topic}.md`, termLines.join('\n'));
+
+        const imageCards = document.querySelectorAll('.scan-card-item .scan-img-file');
+        for (const input of imageCards) {
+          const name = input.getAttribute('data-name');
+          const typeSelect = document.querySelector(`.scan-img-type-select[data-name="${name}"]`);
+          const type = typeSelect ? typeSelect.value : 'maps';
+          let ext = 'png';
+          if (input.files.length > 0) {
+            const file = input.files[0];
+            ext = file.name.split('.').pop() || 'png';
+            const saveFilename = `${block}_${topic}_${name}.${ext}`;
+            await writeBlobFileToProject(dirHandle, `Images/${type}`, saveFilename, file);
+          }
+          const fullPath = `/Images/${type}/${block}_${topic}_${name}.${ext}`;
+          const searchPattern = new RegExp('!___' + escapeRegExp(name) + '___', 'g');
+          finalMarkdown = finalMarkdown.replace(searchPattern, `![${name}](${fullPath})`);
+        }
+
+        const fallbackInlineRegex = /!___([^\r\n]+?)___/g;
+        finalMarkdown = finalMarkdown.replace(fallbackInlineRegex, (match, fallbackName) => {
+          const cleanName = fallbackName.trim();
+          return `![${cleanName}](/Images/maps/${block}_${topic}_${cleanName}.png)`;
+        });
+
+        await writeTextFileToProject(dirHandle, 'Notes', `NT_${block}_${topic}.md`, finalMarkdown);
+
+        const personBioInputs = document.querySelectorAll('.scan-person-bio');
+        const newPersonsMap = new Map();
+
+        const existingPsText = await readTextFileFromProject(dirHandle, 'Persons', `PS_${block}.md`);
+        if (existingPsText) {
+          const existingList = parseKeyValueLines(existingPsText);
+          existingList.forEach(item => {
+            newPersonsMap.set(item.key.trim().toLowerCase(), { key: item.key.trim(), val: item.value });
+          });
+        }
+
+        personBioInputs.forEach(input => {
+          const pName = input.getAttribute('data-name');
+          const bio = input.value.trim();
+          newPersonsMap.set(pName.trim().toLowerCase(), { key: pName.trim(), val: bio });
+        });
+
+        const psLines = Array.from(newPersonsMap.values()).map(p => `${p.key} || ${p.val}`);
+        await writeTextFileToProject(dirHandle, 'Persons', `PS_${block}.md`, psLines.join('\n'));
+
+        const personPhotoInputs = document.querySelectorAll('.scan-person-photo');
+        for (const input of personPhotoInputs) {
+          if (input.files.length > 0) {
+            const file = input.files[0];
+            const pName = input.getAttribute('data-name');
+            const ext = file.name.split('.').pop() || 'png';
+            await writeBlobFileToProject(dirHandle, 'PersonImages', `${pName}.${ext}`, file);
+          }
+        }
+
+        let listJsonObj = {};
+        const listText = await readTextFileFromProject(dirHandle, '', 'list.json');
+        if (listText) {
+          try {
+            listJsonObj = JSON.parse(listText);
+          } catch (e) {
+            listJsonObj = { ...appState.topicsMap };
+          }
+        } else {
+          listJsonObj = { ...appState.topicsMap };
+        }
+
+        if (!listJsonObj[block]) {
+          listJsonObj[block] = [];
+        }
+        if (!listJsonObj[block].includes(topic)) {
+          listJsonObj[block].push(topic);
+        }
+
+        await writeTextFileToProject(dirHandle, '', 'list.json', JSON.stringify(listJsonObj, null, 2));
+
+        saveStatus.className = 'save-status-msg success';
+        saveStatus.textContent = 'Конспект та всі пов\'язані файли успішно збережено!';
+
+        appState.topicsMap = listJsonObj;
+        appState.blocks = Object.keys(listJsonObj);
+        renderBlocksUI();
+        await loadAllPersons();
+
+        setTimeout(() => {
+          closeAddNoteModal();
+          selectBlock(block);
+          selectTopic(topic);
+        }, 1200);
+
+      } catch (err) {
+        saveStatus.className = 'save-status-msg error';
+        saveStatus.textContent = `Помилка збереження: ${err.message}`;
+      }
+    }
+
     async function loadConfig() {
       try {
         await loadMainDates();
@@ -1931,8 +2793,12 @@
           throw new Error(`HTTP помилка: ${response.status}`);
         }
         const data = await response.json();
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          appState.topicsMap = data;
+          appState.blocks = Object.keys(data);
+          await loadAllPersons();
+        }
         parseConfig(data);
-        await loadAllPersons();
       } catch (err) {
         console.error('Не вдалося завантажити list.json:', err);
         handleFetchError(err, 'list.json');
@@ -1966,7 +2832,10 @@
         btn.className = 'chip chip-block';
         btn.textContent = blockName;
         btn.setAttribute('data-block', blockName);
-        btn.addEventListener('click', () => selectBlock(blockName));
+        btn.addEventListener('click', () => {
+          selectBlock(blockName);
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        });
         container.appendChild(btn);
       });
     }
@@ -1976,7 +2845,11 @@
       appState.currentBlock = blockName;
 
       document.querySelectorAll('.chip-block').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-block') === blockName);
+        const isActive = btn.getAttribute('data-block') === blockName;
+        btn.classList.toggle('active', isActive);
+        if (isActive) {
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
       });
 
       renderTopicsUI(blockName);
@@ -2006,7 +2879,10 @@
         btn.className = 'chip chip-topic';
         btn.textContent = topicName;
         btn.setAttribute('data-topic', topicName);
-        btn.addEventListener('click', () => selectTopic(topicName));
+        btn.addEventListener('click', () => {
+          selectTopic(topicName);
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        });
         container.appendChild(btn);
       });
     }
@@ -2015,7 +2891,11 @@
       appState.currentTopic = topicName;
 
       document.querySelectorAll('.chip-topic').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-topic') === topicName);
+        const isActive = btn.getAttribute('data-topic') === topicName;
+        btn.classList.toggle('active', isActive);
+        if (isActive) {
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
       });
 
       updatePathDisplay();
@@ -2051,7 +2931,12 @@
         if (!response.ok) {
           throw new Error(`Файл не знайдено (${response.status})`);
         }
-        const markdownText = await response.text();
+        let markdownText = await response.text();
+        const inlineImgRegex = /!___([^\r\n]+?)___/g;
+        markdownText = markdownText.replace(inlineImgRegex, (match, imgName) => {
+          const cleanName = imgName.trim();
+          return `![${cleanName}](/Images/maps/${block}_${topic}_${cleanName}.png)`;
+        });
         contentEl.innerHTML = marked.parse(markdownText);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (err) {
@@ -2216,8 +3101,8 @@
       const extensions = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
       const candidates = [];
       for (const ext of extensions) {
-        candidates.push({ type: 'Type1', url: `Images/Type1/${block}_${topic}_${name}.${ext}`, name: name });
-        candidates.push({ type: 'Type2', url: `Images/Type2/${block}_${topic}_${name}.${ext}`, name: name });
+        candidates.push({ type: 'maps', url: `Images/maps/${block}_${topic}_${name}.${ext}`, name: name });
+        candidates.push({ type: 'monuments', url: `Images/monuments/${block}_${topic}_${name}.${ext}`, name: name });
       }
 
       const checks = await Promise.all(
@@ -2236,10 +3121,10 @@
       const noteImgs = noteContent.querySelectorAll('img');
       noteImgs.forEach(img => {
         const src = img.getAttribute('src') || '';
-        const match = src.match(/Images\/(Type1|Type2)\/(.+)$/i);
+        const match = src.match(/Images\/(maps|monuments|Type1|Type2)\/(.+)$/i);
         if (match) {
-          const rawType = match[1];
-          const type = rawType.toLowerCase() === 'type1' ? 'Type1' : 'Type2';
+          const rawType = match[1].toLowerCase();
+          const type = (rawType === 'monuments' || rawType === 'type2') ? 'monuments' : 'maps';
           const filename = match[2];
           const prefix = `${block}_${topic}_`;
           let name = filename;
@@ -2296,39 +3181,39 @@
     }
 
     function renderGalleryPanel() {
-      const type1Pane = document.getElementById('galleryType1Pane');
-      const type2Pane = document.getElementById('galleryType2Pane');
-      const type1Count = document.getElementById('galleryType1Count');
-      const type2Count = document.getElementById('galleryType2Count');
+      const mapsPane = document.getElementById('galleryMapsPane');
+      const monumentsPane = document.getElementById('galleryMonumentsPane');
+      const mapsCount = document.getElementById('galleryMapsCount');
+      const monumentsCount = document.getElementById('galleryMonumentsCount');
 
-      const type1Items = appState.galleryItems.filter(i => i.type === 'Type1');
-      const type2Items = appState.galleryItems.filter(i => i.type === 'Type2');
+      const mapsItems = appState.galleryItems.filter(i => i.type === 'maps');
+      const monumentsItems = appState.galleryItems.filter(i => i.type === 'monuments');
 
-      if (type1Count) {
-        type1Count.textContent = type1Items.length;
+      if (mapsCount) {
+        mapsCount.textContent = mapsItems.length;
       }
-      if (type2Count) {
-        type2Count.textContent = type2Items.length;
+      if (monumentsCount) {
+        monumentsCount.textContent = monumentsItems.length;
       }
 
-      if (type1Pane) {
-        type1Pane.innerHTML = '';
-        if (type1Items.length === 0) {
-          type1Pane.innerHTML = '<div class="panel-empty-state">Немає зображень Типу 1</div>';
+      if (mapsPane) {
+        mapsPane.innerHTML = '';
+        if (mapsItems.length === 0) {
+          mapsPane.innerHTML = '<div class="panel-empty-state">Немає карт</div>';
         } else {
-          type1Items.forEach(item => {
-            type1Pane.appendChild(createGalleryCard(item));
+          mapsItems.forEach(item => {
+            mapsPane.appendChild(createGalleryCard(item));
           });
         }
       }
 
-      if (type2Pane) {
-        type2Pane.innerHTML = '';
-        if (type2Items.length === 0) {
-          type2Pane.innerHTML = '<div class="panel-empty-state">Немає зображень Типу 2</div>';
+      if (monumentsPane) {
+        monumentsPane.innerHTML = '';
+        if (monumentsItems.length === 0) {
+          monumentsPane.innerHTML = '<div class="panel-empty-state">Немає пам\'яток</div>';
         } else {
-          type2Items.forEach(item => {
-            type2Pane.appendChild(createGalleryCard(item));
+          monumentsItems.forEach(item => {
+            monumentsPane.appendChild(createGalleryCard(item));
           });
         }
       }
@@ -2365,15 +3250,16 @@
     }
 
     function openGalleryToImage(name, type) {
+      const normalizedType = (type === 'monuments' || type === 'Type2') ? 'monuments' : 'maps';
       if (appState.isGalleryCollapsed) {
         toggleGalleryPanel(false);
       }
       if (window.innerWidth <= 1200 && !appState.isMobileGalleryOpen) {
         setMobileGalleryOpen(true);
       }
-      switchGalleryTab(type);
+      switchGalleryTab(normalizedType);
 
-      const pane = document.getElementById(type === 'Type1' ? 'galleryType1Pane' : 'galleryType2Pane');
+      const pane = document.getElementById(normalizedType === 'maps' ? 'galleryMapsPane' : 'galleryMonumentsPane');
       if (!pane) return;
 
       const cards = pane.querySelectorAll('.gallery-card');
@@ -2465,7 +3351,7 @@
 
       const emElements = noteContent.querySelectorAll('em');
       emElements.forEach(em => {
-        if (em.querySelector('strong')) return;
+        if (em.closest('strong') || em.querySelector('strong')) return;
         const text = em.textContent.trim().toLowerCase();
         let matchedDate = null;
 
@@ -2497,7 +3383,7 @@
 
       const strongElements = noteContent.querySelectorAll('strong');
       strongElements.forEach(strong => {
-        if (strong.querySelector('em')) return;
+        if (strong.closest('em') || strong.querySelector('em')) return;
         const text = strong.textContent.trim().toLowerCase();
         let matchedTerm = null;
 
@@ -2529,16 +3415,28 @@
 
       const codeElements = noteContent.querySelectorAll('code');
       codeElements.forEach(code => {
-        const text = code.textContent.trim().toLowerCase();
-        if (appState.allPersonsByName.has(text)) {
-          const personData = appState.allPersonsByName.get(text);
-          code.classList.add('interactive-person');
-          code.setAttribute('title', `Натисніть, щоб переглянути біографію: ${personData.person.name}`);
-
-          code.addEventListener('click', () => {
-            openPersonsModal(personData.block, personData.person);
-          });
+        const rawText = code.textContent.trim();
+        const text = rawText.toLowerCase();
+        let personData = appState.allPersonsByName.get(text);
+        if (!personData) {
+          for (const [pKey, pVal] of appState.allPersonsByName.entries()) {
+            if (pKey === text || pKey.includes(text) || text.includes(pKey)) {
+              personData = pVal;
+              break;
+            }
+          }
         }
+
+        code.classList.add('interactive-person');
+        code.setAttribute('title', personData ? `Натисніть, щоб переглянути біографію: ${personData.person.name}` : `Натисніть, щоб відкрити розділ "Люди" (${rawText})`);
+
+        code.addEventListener('click', () => {
+          if (personData) {
+            openPersonsModal(personData.block, personData.person);
+          } else {
+            openPersonsModal(appState.currentBlock);
+          }
+        });
       });
     }
 
@@ -2594,9 +3492,12 @@
 
       const allEmOrStrong = noteContent.querySelectorAll(type === 'dates' ? 'em' : 'strong');
       for (let i = 0; i < allEmOrStrong.length; i++) {
-        const text = allEmOrStrong[i].textContent.trim().toLowerCase();
+        const el = allEmOrStrong[i];
+        if (type === 'dates' && (el.closest('strong') || el.querySelector('strong'))) continue;
+        if (type === 'terms' && (el.closest('em') || el.querySelector('em'))) continue;
+        const text = el.textContent.trim().toLowerCase();
         if (text === lowerKey || text.includes(lowerKey) || lowerKey.includes(text)) {
-          return allEmOrStrong[i];
+          return el;
         }
       }
 
@@ -2672,9 +3573,15 @@
         .replace(/'/g, '&#039;');
     }
 
+    function escapeRegExp(string) {
+      if (!string) return '';
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       setupToggleNav();
       setupSidePanels();
+      setupAddNoteModal();
       loadConfig();
     });
   </script>
