@@ -1612,6 +1612,11 @@
           <span>Люди</span>
         </button>
 
+        <button id="openAboutBtn" class="toggle-nav-btn" aria-label="Про сайт" title="Про сайт (ABOUT.md)">
+          <span>ℹ️</span>
+          <span>Про сайт</span>
+        </button>
+
         <button id="toggleGalleryBtn" class="toggle-nav-btn toggle-gallery-nav-btn active" aria-label="Згорнути або розгорнути галерею" title="Згорнути або розгорнути галерею">
           <span>🖼️</span>
           <span>Галерея</span>
@@ -1763,7 +1768,13 @@
         <div class="persons-modal-title">
           <span>📝 Додати новий конспект</span>
         </div>
-        <button class="persons-modal-close" id="closeAddNoteModalBtn" aria-label="Закрити">&times;</button>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="chip" id="openAddingGuideBtn" type="button" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--c-border); background: var(--c-surface); cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 500;" title="Інструкція з додавання конспектів (ADDING.md)">
+            <span>❓</span>
+            <span>Інструкція</span>
+          </button>
+          <button class="persons-modal-close" id="closeAddNoteModalBtn" aria-label="Закрити">&times;</button>
+        </div>
       </div>
 
       <div class="persons-modal-body">
@@ -1827,6 +1838,23 @@
           </div>
 
           <div class="save-status-msg" id="saveStatusMsg" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="persons-modal-overlay" id="docModalOverlay" style="z-index: 400;">
+    <div class="persons-modal" id="docModal" style="max-width: 840px;">
+      <div class="persons-modal-header">
+        <div class="persons-modal-title">
+          <span id="docModalTitle">📄 Документ</span>
+        </div>
+        <button class="persons-modal-close" id="closeDocModalBtn" aria-label="Закрити">&times;</button>
+      </div>
+      <div class="persons-modal-body markdown-body" id="docModalBody">
+        <div class="state-message">
+          <div class="spinner"></div>
+          <p>Завантаження...</p>
         </div>
       </div>
     </div>
@@ -3578,10 +3606,98 @@
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
+    function setupDocModal() {
+      const openAboutBtn = document.getElementById('openAboutBtn');
+      if (openAboutBtn) {
+        openAboutBtn.addEventListener('click', () => openDocModal('ℹ️ Про проєкт NMTesher', 'ABOUT.md'));
+      }
+
+      const openAddingGuideBtn = document.getElementById('openAddingGuideBtn');
+      if (openAddingGuideBtn) {
+        openAddingGuideBtn.addEventListener('click', () => openDocModal('📖 Інструкція: як додавати конспект', 'ADDING.md'));
+      }
+
+      const closeDocModalBtn = document.getElementById('closeDocModalBtn');
+      if (closeDocModalBtn) {
+        closeDocModalBtn.addEventListener('click', closeDocModal);
+      }
+
+      const docModalOverlay = document.getElementById('docModalOverlay');
+      if (docModalOverlay) {
+        docModalOverlay.addEventListener('click', (e) => {
+          if (e.target === docModalOverlay) closeDocModal();
+        });
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (docModalOverlay && docModalOverlay.classList.contains('is-visible')) {
+            closeDocModal();
+          } else {
+            const addNoteOverlay = document.getElementById('addNoteModalOverlay');
+            const personsOverlay = document.getElementById('personsModalOverlay');
+            if (addNoteOverlay && addNoteOverlay.classList.contains('is-visible')) {
+              closeAddNoteModal();
+            } else if (personsOverlay && personsOverlay.classList.contains('is-visible')) {
+              closePersonsModal();
+            }
+          }
+        }
+      });
+    }
+
+    async function openDocModal(title, filePath) {
+      const overlay = document.getElementById('docModalOverlay');
+      const titleEl = document.getElementById('docModalTitle');
+      const bodyEl = document.getElementById('docModalBody');
+      if (!overlay || !titleEl || !bodyEl) return;
+
+      titleEl.textContent = title;
+      bodyEl.innerHTML = `
+        <div class="state-message">
+          <div class="spinner"></div>
+          <p>Завантаження: <strong>${escapeHtml(filePath)}</strong>...</p>
+        </div>
+      `;
+      overlay.classList.add('is-visible');
+
+      try {
+        const res = await fetch(filePath);
+        if (!res.ok) {
+          throw new Error(`Файл не знайдено (${res.status})`);
+        }
+        const text = await res.text();
+        if (!text.trim()) {
+          bodyEl.innerHTML = `
+            <div class="panel-empty-state">
+              <h3>Файл ${escapeHtml(filePath)} наразі порожній</h3>
+            </div>
+          `;
+        } else {
+          bodyEl.innerHTML = marked.parse(text);
+        }
+      } catch (err) {
+        bodyEl.innerHTML = `
+          <div class="error-message">
+            <h3>Не вдалося відкрити ${escapeHtml(filePath)}</h3>
+            <p>${escapeHtml(err.message || 'Помилка доступу до файлу')}</p>
+          </div>
+        `;
+      }
+    }
+
+    function closeDocModal() {
+      const overlay = document.getElementById('docModalOverlay');
+      if (overlay) {
+        overlay.classList.remove('is-visible');
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       setupToggleNav();
       setupSidePanels();
       setupAddNoteModal();
+      setupDocModal();
       loadConfig();
     });
   </script>
