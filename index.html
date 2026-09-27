@@ -83,7 +83,7 @@
     .nav-right-cluster {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .current-path {
@@ -128,6 +128,12 @@
     }
 
     .toggle-nav-btn:hover {
+      background: var(--c-accent-peach);
+      border-color: var(--c-primary);
+      color: var(--c-primary-dark);
+    }
+
+    .toggle-panel-nav-btn.active {
       background: var(--c-accent-peach);
       border-color: var(--c-primary);
       color: var(--c-primary-dark);
@@ -233,18 +239,36 @@
     main.content-area {
       flex: 1;
       width: 100%;
-      max-width: 920px;
+      max-width: 1400px;
       margin: 0 auto;
       padding: 32px 24px 60px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      justify-content: center;
+      transition: gap 0.3s ease;
     }
 
     .note-container {
+      flex: 1;
+      min-width: 0;
+      max-width: 920px;
       background: var(--c-surface-card);
       border-radius: 10px;
       border: 1px solid var(--c-border);
       padding: 40px 48px;
       box-shadow: 0 4px 18px rgba(43, 48, 52, 0.04);
       min-height: 480px;
+      transition: max-width 0.3s ease, margin 0.3s ease;
+    }
+
+    body.panel-collapsed .note-container {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    body:not(.panel-collapsed) .note-container {
+      max-width: 100%;
     }
 
     .markdown-body h1,
@@ -443,6 +467,444 @@
       to { transform: rotate(360deg); }
     }
 
+    .side-panel {
+      width: 350px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 86px;
+      max-height: calc(100vh - 106px);
+      display: flex;
+      flex-direction: column;
+      background: var(--c-surface-card);
+      border: 1px solid var(--c-border);
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(43, 48, 52, 0.04);
+      overflow: hidden;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin 0.3s ease, transform 0.3s ease, border-color 0.2s ease;
+    }
+
+    body.panel-collapsed .side-panel {
+      width: 0;
+      margin-left: -24px;
+      opacity: 0;
+      pointer-events: none;
+      border-color: transparent;
+      transform: translateX(18px);
+    }
+
+    .side-panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--c-border);
+      background: var(--c-surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 348px;
+    }
+
+    .side-panel-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .collapse-panel-btn {
+      background: transparent;
+      border: none;
+      color: var(--c-slate-blue);
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .collapse-panel-btn:hover {
+      color: var(--c-accent-red);
+      background: var(--c-bg-paper);
+    }
+
+    .side-panel-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--c-border);
+      background: var(--c-bg-paper);
+      min-width: 348px;
+    }
+
+    .panel-tab-btn {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--c-slate-blue);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .panel-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--c-primary-dark);
+    }
+
+    .panel-tab-btn.active {
+      color: var(--c-primary-dark);
+      background: var(--c-surface-card);
+    }
+
+    .panel-tab-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--c-primary);
+    }
+
+    .tab-badge {
+      font-size: 0.72rem;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: var(--c-accent-peach);
+      color: var(--c-primary-dark);
+      font-weight: 700;
+    }
+
+    .side-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 348px;
+    }
+
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tab-pane.active {
+      display: flex;
+    }
+
+    .item-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s, background-color 0.2s;
+    }
+
+    .item-card:hover {
+      border-color: var(--c-primary);
+      background: #FFFDFC;
+    }
+
+    .item-card.is-expanded {
+      border-color: var(--c-primary);
+      box-shadow: 0 2px 8px rgba(159, 109, 45, 0.15);
+    }
+
+    .item-card.is-highlighted {
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 2px var(--c-primary), 0 2px 10px rgba(159, 109, 45, 0.25);
+      animation: cardPulse 1.4s ease-in-out;
+    }
+
+    @keyframes cardPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shakeCard {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    .shake-card {
+      animation: shakeCard 0.35s ease;
+    }
+
+    .item-header {
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      user-select: none;
+    }
+
+    .item-key {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      word-break: break-word;
+    }
+
+    .item-card.date-card .item-key {
+      color: var(--c-primary);
+    }
+
+    .presence-indicator {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.2px;
+      user-select: none;
+      margin-left: auto;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    .presence-indicator.in-text {
+      background: rgba(98, 124, 140, 0.12);
+      color: var(--c-slate-blue);
+      border: 1px solid rgba(98, 124, 140, 0.3);
+    }
+
+    .presence-indicator.not-in-text {
+      background: rgba(152, 147, 152, 0.12);
+      color: var(--c-muted);
+      border: 1px dashed var(--c-border);
+    }
+
+    .item-icon {
+      font-size: 0.7rem;
+      color: var(--c-slate-blue);
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .item-value {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.3s ease;
+      padding: 0 12px;
+      font-size: 0.86rem;
+      color: var(--c-text-dark);
+      line-height: 1.45;
+      background: var(--c-bg-paper);
+      border-top: 1px dashed transparent;
+    }
+
+    .item-card:hover .item-value,
+    .item-card.is-expanded .item-value {
+      max-height: 400px;
+      opacity: 1;
+      padding: 10px 12px;
+      border-top-color: var(--c-border);
+    }
+
+    .item-card:hover .item-icon,
+    .item-card.is-expanded .item-icon {
+      transform: rotate(180deg);
+    }
+
+    .panel-empty-state {
+      text-align: center;
+      padding: 30px 16px;
+      color: var(--c-muted);
+      font-size: 0.88rem;
+    }
+
+    .docked-panel-tab {
+      display: none;
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--c-primary-dark);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px 0 0 8px;
+      padding: 14px 10px;
+      box-shadow: -2px 4px 14px rgba(43, 48, 52, 0.2);
+      cursor: pointer;
+      z-index: 90;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 0.84rem;
+      font-weight: 600;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .docked-panel-tab:hover {
+      background: var(--c-primary);
+      transform: translateY(-50%) translateX(-2px);
+    }
+
+    body.panel-collapsed .docked-panel-tab {
+      display: flex;
+    }
+
+    .mobile-panel-toggle {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 150;
+      background: var(--c-primary-dark);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 28px;
+      padding: 12px 20px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(43, 48, 52, 0.25);
+      align-items: center;
+      gap: 8px;
+      font-family: inherit;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .mobile-panel-toggle:hover {
+      background: var(--c-primary);
+      transform: translateY(-2px);
+    }
+
+    .mobile-panel-toggle .toggle-badge {
+      background: var(--c-accent-peach);
+      color: var(--c-primary-dark);
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .side-panel-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(43, 48, 52, 0.5);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      z-index: 190;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .interactive-date {
+      border-bottom: 2px dashed var(--c-primary);
+      border-radius: 3px;
+      padding: 0 3px;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
+      scroll-margin-top: 110px;
+    }
+
+    .interactive-date:hover {
+      background-color: var(--c-accent-peach);
+      color: var(--c-primary-dark);
+    }
+
+    .interactive-term {
+      border-bottom: 2px dashed var(--c-primary-dark);
+      border-radius: 3px;
+      padding: 0 3px;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
+      scroll-margin-top: 110px;
+    }
+
+    .interactive-term:hover {
+      background-color: var(--c-accent-peach);
+      color: var(--c-primary-dark);
+    }
+
+    @keyframes textFlashHighlight {
+      0% {
+        background-color: #FFE082;
+        color: #000;
+        box-shadow: 0 0 0 4px #FFE082, 0 0 14px rgba(159, 109, 45, 0.45);
+        border-radius: 4px;
+      }
+      60% {
+        background-color: #FFE082;
+        color: #000;
+        box-shadow: 0 0 0 4px #FFE082, 0 0 14px rgba(159, 109, 45, 0.45);
+        border-radius: 4px;
+      }
+      100% {
+        background-color: transparent;
+        color: inherit;
+        box-shadow: none;
+      }
+    }
+
+    .text-flash-highlight {
+      animation: textFlashHighlight 2.6s ease forwards;
+      display: inline-block;
+      scroll-margin-top: 110px;
+    }
+
+    @media (max-width: 1024px) {
+      body.panel-collapsed .docked-panel-tab {
+        display: none;
+      }
+
+      main.content-area {
+        display: block;
+        max-width: 920px;
+      }
+
+      .side-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 360px;
+        max-width: 88vw;
+        max-height: 100vh;
+        border-radius: 0;
+        border-top: none;
+        border-bottom: none;
+        border-right: none;
+        z-index: 200;
+        transform: translateX(100%);
+        box-shadow: -6px 0 24px rgba(43, 48, 52, 0.15);
+        opacity: 1 !important;
+        margin-left: 0 !important;
+      }
+
+      .side-panel.is-open {
+        transform: translateX(0);
+      }
+
+      .side-panel-overlay.is-visible {
+        display: block;
+        opacity: 1;
+      }
+
+      .mobile-panel-toggle {
+        display: flex;
+      }
+    }
+
     @media (max-width: 768px) {
       header.top-nav {
         padding: 10px 14px 12px;
@@ -496,6 +958,11 @@
           <span id="activeTopicLabel">—</span>
         </div>
 
+        <button id="toggleSidePanelBtn" class="toggle-nav-btn toggle-panel-nav-btn active" aria-label="Згорнути або розгорнути довідник" title="Згорнути або розгорнути довідник">
+          <span class="toggle-panel-icon">📚</span>
+          <span class="toggle-panel-text">Довідник</span>
+        </button>
+
         <button id="toggleNavBtn" class="toggle-nav-btn" aria-label="Згорнути або розгорнути панель тем" title="Згорнути панель тем">
           <span class="toggle-text">Згорнути</span>
           <span class="toggle-icon">▲</span>
@@ -527,14 +994,59 @@
         </div>
       </div>
     </div>
+
+    <aside class="side-panel" id="sidePanel">
+      <div class="side-panel-header">
+        <div class="side-panel-title">
+          <span>📚 Довідник</span>
+        </div>
+        <button class="collapse-panel-btn" id="collapseSidePanelBtn" aria-label="Згорнути довідник" title="Згорнути довідник">&times;</button>
+      </div>
+
+      <div class="side-panel-tabs">
+        <button class="panel-tab-btn active" id="tabDatesBtn">
+          <span>Дати</span>
+          <span class="tab-badge" id="datesCount">0</span>
+        </button>
+        <button class="panel-tab-btn" id="tabTermsBtn">
+          <span>Терміни</span>
+          <span class="tab-badge" id="termsCount">0</span>
+        </button>
+      </div>
+
+      <div class="side-panel-body">
+        <div class="tab-pane active" id="datesTabPane">
+          <div class="panel-empty-state">Завантаження дат...</div>
+        </div>
+        <div class="tab-pane" id="termsTabPane">
+          <div class="panel-empty-state">Завантаження термінів...</div>
+        </div>
+      </div>
+    </aside>
   </main>
+
+  <button class="docked-panel-tab" id="dockedPanelTab" title="Розгорнути довідник">
+    <span>📚 Довідник</span>
+  </button>
+
+  <div class="side-panel-overlay" id="sidePanelOverlay"></div>
+
+  <button class="mobile-panel-toggle" id="openSidePanelBtn" aria-label="Відкрити довідник">
+    <span>📚 Довідник</span>
+    <span class="toggle-badge" id="mobilePanelBadge">0</span>
+  </button>
 
   <script>
     const appState = {
-      blocks: [],         
-      topicsMap: {},      
+      blocks: [],
+      topicsMap: {},
       currentBlock: null,
-      currentTopic: null
+      currentTopic: null,
+      currentDates: [],
+      currentTerms: [],
+      activeSideTab: 'dates',
+      isMobilePanelOpen: false,
+      isSidePanelCollapsed: false
     };
 
     const renderer = new marked.Renderer();
@@ -584,6 +1096,78 @@
           updateToggleState(false);
         }
       });
+    }
+
+    function toggleSidePanel(forceState) {
+      if (window.innerWidth <= 1024) {
+        if (typeof forceState === 'boolean') {
+          setMobilePanelOpen(!forceState);
+        } else {
+          setMobilePanelOpen(!appState.isMobilePanelOpen);
+        }
+        return;
+      }
+
+      const newState = typeof forceState === 'boolean' ? forceState : !appState.isSidePanelCollapsed;
+      appState.isSidePanelCollapsed = newState;
+      document.body.classList.toggle('panel-collapsed', appState.isSidePanelCollapsed);
+
+      const toggleBtn = document.getElementById('toggleSidePanelBtn');
+      if (toggleBtn) {
+        toggleBtn.classList.toggle('active', !appState.isSidePanelCollapsed);
+      }
+    }
+
+    function setupSidePanel() {
+      const tabDatesBtn = document.getElementById('tabDatesBtn');
+      const tabTermsBtn = document.getElementById('tabTermsBtn');
+      const collapseBtn = document.getElementById('collapseSidePanelBtn');
+      const toggleBtn = document.getElementById('toggleSidePanelBtn');
+      const dockedTab = document.getElementById('dockedPanelTab');
+      const openBtn = document.getElementById('openSidePanelBtn');
+      const overlay = document.getElementById('sidePanelOverlay');
+
+      if (tabDatesBtn) {
+        tabDatesBtn.addEventListener('click', () => switchTab('dates'));
+      }
+      if (tabTermsBtn) {
+        tabTermsBtn.addEventListener('click', () => switchTab('terms'));
+      }
+      if (collapseBtn) {
+        collapseBtn.addEventListener('click', () => toggleSidePanel(true));
+      }
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => toggleSidePanel());
+      }
+      if (dockedTab) {
+        dockedTab.addEventListener('click', () => toggleSidePanel(false));
+      }
+      if (openBtn) {
+        openBtn.addEventListener('click', () => setMobilePanelOpen(true));
+      }
+      if (overlay) {
+        overlay.addEventListener('click', () => setMobilePanelOpen(false));
+      }
+    }
+
+    function switchTab(tabName) {
+      appState.activeSideTab = tabName;
+      document.getElementById('tabDatesBtn').classList.toggle('active', tabName === 'dates');
+      document.getElementById('tabTermsBtn').classList.toggle('active', tabName === 'terms');
+      document.getElementById('datesTabPane').classList.toggle('active', tabName === 'dates');
+      document.getElementById('termsTabPane').classList.toggle('active', tabName === 'terms');
+    }
+
+    function setMobilePanelOpen(isOpen) {
+      appState.isMobilePanelOpen = isOpen;
+      const sidePanel = document.getElementById('sidePanel');
+      const overlay = document.getElementById('sidePanelOverlay');
+      if (sidePanel) {
+        sidePanel.classList.toggle('is-open', isOpen);
+      }
+      if (overlay) {
+        overlay.classList.toggle('is-visible', isOpen);
+      }
     }
 
     async function loadConfig() {
@@ -647,6 +1231,9 @@
         selectTopic(topics[0]);
       } else {
         appState.currentTopic = null;
+        appState.currentDates = [];
+        appState.currentTerms = [];
+        renderSidePanel();
         updatePathDisplay();
         showError(`Для блоку "${blockName}" не знайдено тем.`);
       }
@@ -667,7 +1254,7 @@
       });
     }
 
-    function selectTopic(topicName) {
+    async function selectTopic(topicName) {
       appState.currentTopic = topicName;
 
       document.querySelectorAll('.chip-topic').forEach(btn => {
@@ -675,7 +1262,13 @@
       });
 
       updatePathDisplay();
-      loadNoteMarkdown(appState.currentBlock, appState.currentTopic);
+
+      await Promise.all([
+        loadNoteMarkdown(appState.currentBlock, appState.currentTopic),
+        loadDatesAndTerms(appState.currentBlock, appState.currentTopic)
+      ]);
+
+      bindTextInteractivity();
     }
 
     function updatePathDisplay() {
@@ -709,6 +1302,322 @@
       }
     }
 
+    async function fetchFileWithFallback(path1, path2) {
+      try {
+        const res = await fetch(path1);
+        if (res.ok) {
+          return await res.text();
+        }
+      } catch (err) {}
+      if (path2) {
+        try {
+          const res = await fetch(path2);
+          if (res.ok) {
+            return await res.text();
+          }
+        } catch (err) {}
+      }
+      return null;
+    }
+
+    function parseKeyValueLines(text) {
+      if (!text) return [];
+      const lines = text.split(/\r?\n/);
+      const result = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || !line.includes('||')) continue;
+        const separatorIndex = line.indexOf('||');
+        const key = line.substring(0, separatorIndex).trim();
+        const value = line.substring(separatorIndex + 2).trim();
+        if (key) {
+          result.push({ key, value });
+        }
+      }
+      return result;
+    }
+
+    async function loadDatesAndTerms(block, topic) {
+      const datesPane = document.getElementById('datesTabPane');
+      const termsPane = document.getElementById('termsTabPane');
+      if (datesPane) {
+        datesPane.innerHTML = '<div class="panel-empty-state">Завантаження дат...</div>';
+      }
+      if (termsPane) {
+        termsPane.innerHTML = '<div class="panel-empty-state">Завантаження термінів...</div>';
+      }
+
+      const dateFileName = `DT_${block}_${topic}.md`;
+      const termFileName = `TM_${block}_${topic}.md`;
+
+      const [dateText, termText] = await Promise.all([
+        fetchFileWithFallback(`Dates/${dateFileName}`, `Date/${dateFileName}`),
+        fetchFileWithFallback(`Terms/${termFileName}`, `Term/${termFileName}`)
+      ]);
+
+      appState.currentDates = parseKeyValueLines(dateText);
+      appState.currentTerms = parseKeyValueLines(termText);
+
+      renderSidePanel();
+    }
+
+    function renderSidePanel() {
+      const datesPane = document.getElementById('datesTabPane');
+      const termsPane = document.getElementById('termsTabPane');
+      const datesCount = document.getElementById('datesCount');
+      const termsCount = document.getElementById('termsCount');
+      const mobileBadge = document.getElementById('mobilePanelBadge');
+
+      if (datesCount) {
+        datesCount.textContent = appState.currentDates.length;
+      }
+      if (termsCount) {
+        termsCount.textContent = appState.currentTerms.length;
+      }
+      if (mobileBadge) {
+        mobileBadge.textContent = appState.currentDates.length + appState.currentTerms.length;
+      }
+
+      if (datesPane) {
+        datesPane.innerHTML = '';
+        if (appState.currentDates.length === 0) {
+          datesPane.innerHTML = '<div class="panel-empty-state">Немає дат для цієї теми</div>';
+        } else {
+          appState.currentDates.forEach(item => {
+            datesPane.appendChild(createItemCard(item, 'dates'));
+          });
+        }
+      }
+
+      if (termsPane) {
+        termsPane.innerHTML = '';
+        if (appState.currentTerms.length === 0) {
+          termsPane.innerHTML = '<div class="panel-empty-state">Немає термінів для цієї теми</div>';
+        } else {
+          appState.currentTerms.forEach(item => {
+            termsPane.appendChild(createItemCard(item, 'terms'));
+          });
+        }
+      }
+    }
+
+    function createItemCard(item, type) {
+      const card = document.createElement('div');
+      card.className = `item-card ${type === 'dates' ? 'date-card' : 'term-card'}`;
+      card.setAttribute('data-key', item.key.trim().toLowerCase());
+      card.setAttribute('data-type', type);
+
+      const header = document.createElement('div');
+      header.className = 'item-header';
+
+      const keySpan = document.createElement('span');
+      keySpan.className = 'item-key';
+      keySpan.textContent = item.key;
+
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'item-icon';
+      iconSpan.textContent = '▼';
+
+      header.appendChild(keySpan);
+      header.appendChild(iconSpan);
+
+      const valueDiv = document.createElement('div');
+      valueDiv.className = 'item-value';
+      valueDiv.textContent = item.value;
+
+      card.appendChild(header);
+      card.appendChild(valueDiv);
+
+      card.addEventListener('click', () => {
+        card.classList.toggle('is-expanded');
+        scrollToTextMatch(item.key, type, card);
+      });
+
+      return card;
+    }
+
+    function updatePanelItemBadges() {
+      const cards = document.querySelectorAll('.item-card');
+      cards.forEach(card => {
+        const key = card.getAttribute('data-key');
+        const type = card.getAttribute('data-type');
+        const hasMatch = Boolean(findTextElement(key, type));
+
+        const oldBadge = card.querySelector('.presence-indicator');
+        if (oldBadge) {
+          oldBadge.remove();
+        }
+
+        const indicator = document.createElement('span');
+        indicator.className = `presence-indicator ${hasMatch ? 'in-text' : 'not-in-text'}`;
+        indicator.title = hasMatch ? 'Згадується в поточному конспекті' : 'Відсутня згадка в поточному конспекті';
+        indicator.textContent = hasMatch ? '✓ в тексті' : 'немає в тексті';
+
+        const header = card.querySelector('.item-header');
+        if (header) {
+          const icon = header.querySelector('.item-icon');
+          header.insertBefore(indicator, icon);
+        }
+      });
+    }
+
+    function bindTextInteractivity() {
+      const noteContent = document.getElementById('noteContent');
+      if (!noteContent) return;
+
+      const emElements = noteContent.querySelectorAll('em');
+      emElements.forEach(em => {
+        const text = em.textContent.trim().toLowerCase();
+        let matchedDate = null;
+
+        for (let i = 0; i < appState.currentDates.length; i++) {
+          const d = appState.currentDates[i];
+          const key = d.key.trim().toLowerCase();
+          if (text === key || text.includes(key) || key.includes(text)) {
+            matchedDate = d;
+            break;
+          }
+        }
+
+        if (matchedDate) {
+          em.classList.add('interactive-date');
+          em.setAttribute('data-date-key', matchedDate.key.trim().toLowerCase());
+          em.setAttribute('title', `${matchedDate.key}: ${matchedDate.value}`);
+
+          em.addEventListener('click', () => {
+            if (appState.isSidePanelCollapsed) {
+              toggleSidePanel(false);
+            }
+            if (window.innerWidth <= 1024 && !appState.isMobilePanelOpen) {
+              setMobilePanelOpen(true);
+            }
+            activateSideItem(matchedDate.key.trim().toLowerCase(), 'dates');
+          });
+        }
+      });
+
+      const strongElements = noteContent.querySelectorAll('strong');
+      strongElements.forEach(strong => {
+        const text = strong.textContent.trim().toLowerCase();
+        let matchedTerm = null;
+
+        for (let i = 0; i < appState.currentTerms.length; i++) {
+          const t = appState.currentTerms[i];
+          const key = t.key.trim().toLowerCase();
+          if (text === key || text.includes(key) || key.includes(text)) {
+            matchedTerm = t;
+            break;
+          }
+        }
+
+        if (matchedTerm) {
+          strong.classList.add('interactive-term');
+          strong.setAttribute('data-term-key', matchedTerm.key.trim().toLowerCase());
+          strong.setAttribute('title', `${matchedTerm.key}: ${matchedTerm.value}`);
+
+          strong.addEventListener('click', () => {
+            if (appState.isSidePanelCollapsed) {
+              toggleSidePanel(false);
+            }
+            if (window.innerWidth <= 1024 && !appState.isMobilePanelOpen) {
+              setMobilePanelOpen(true);
+            }
+            activateSideItem(matchedTerm.key.trim().toLowerCase(), 'terms');
+          });
+        }
+      });
+
+      updatePanelItemBadges();
+    }
+
+    function activateSideItem(key, type) {
+      switchTab(type);
+      if (window.innerWidth <= 1024) {
+        setMobilePanelOpen(true);
+      }
+      const pane = document.getElementById(type === 'dates' ? 'datesTabPane' : 'termsTabPane');
+      if (!pane) return;
+      const cards = pane.querySelectorAll('.item-card');
+      let targetCard = null;
+      cards.forEach(card => {
+        const cardKey = card.getAttribute('data-key');
+        if (cardKey === key) {
+          targetCard = card;
+          card.classList.add('is-expanded');
+          card.classList.add('is-highlighted');
+          setTimeout(() => {
+            card.classList.remove('is-highlighted');
+          }, 1600);
+        } else {
+          card.classList.remove('is-highlighted');
+        }
+      });
+
+      if (targetCard) {
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function findTextElement(key, type) {
+      const noteContent = document.getElementById('noteContent');
+      if (!noteContent) return null;
+
+      const lowerKey = key.trim().toLowerCase();
+      const interactiveSelector = type === 'dates' ? '.interactive-date' : '.interactive-term';
+      const interactiveElements = noteContent.querySelectorAll(interactiveSelector);
+
+      for (let i = 0; i < interactiveElements.length; i++) {
+        const attr = interactiveElements[i].getAttribute(type === 'dates' ? 'data-date-key' : 'data-term-key');
+        if (attr && attr.toLowerCase() === lowerKey) {
+          return interactiveElements[i];
+        }
+      }
+
+      for (let i = 0; i < interactiveElements.length; i++) {
+        const text = interactiveElements[i].textContent.trim().toLowerCase();
+        if (text === lowerKey || text.includes(lowerKey) || lowerKey.includes(text)) {
+          return interactiveElements[i];
+        }
+      }
+
+      const allEmOrStrong = noteContent.querySelectorAll(type === 'dates' ? 'em' : 'strong');
+      for (let i = 0; i < allEmOrStrong.length; i++) {
+        const text = allEmOrStrong[i].textContent.trim().toLowerCase();
+        if (text === lowerKey || text.includes(lowerKey) || lowerKey.includes(text)) {
+          return allEmOrStrong[i];
+        }
+      }
+
+      const allBlocks = noteContent.querySelectorAll('p, li, h1, h2, h3, h4, blockquote, td, th');
+      for (let i = 0; i < allBlocks.length; i++) {
+        const text = allBlocks[i].textContent.toLowerCase();
+        if (text.includes(lowerKey)) {
+          return allBlocks[i];
+        }
+      }
+
+      return null;
+    }
+
+    function scrollToTextMatch(key, type, card) {
+      const targetEl = findTextElement(key, type);
+      if (targetEl) {
+        document.querySelectorAll('.text-flash-highlight').forEach(el => {
+          el.classList.remove('text-flash-highlight');
+        });
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('text-flash-highlight');
+        setTimeout(() => {
+          targetEl.classList.remove('text-flash-highlight');
+        }, 2800);
+      } else if (card) {
+        card.classList.add('shake-card');
+        setTimeout(() => {
+          card.classList.remove('shake-card');
+        }, 400);
+      }
+    }
+
     function handleFetchError(err, targetResource) {
       const isFileProtocol = window.location.protocol === 'file:';
       const contentEl = document.getElementById('noteContent');
@@ -717,7 +1626,6 @@
       if (isFileProtocol) {
         corsHelpHtml = `
             <strong>⚠️ Браузер заблокував локальний запит (CORS):</strong><br>
-            
         `;
       }
 
@@ -754,6 +1662,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       setupToggleNav();
+      setupSidePanel();
       loadConfig();
     });
   </script>
