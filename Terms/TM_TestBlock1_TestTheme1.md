@@ -1,1 +1,0 @@
-SomeTerm || qwertyytrewq
