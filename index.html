@@ -652,6 +652,14 @@
       user-select: none;
     }
 
+    .item-key-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
     .item-key {
       font-size: 0.9rem;
       font-weight: 700;
@@ -663,28 +671,15 @@
       color: var(--c-primary);
     }
 
-    .presence-indicator {
-      font-size: 0.68rem;
-      font-weight: 600;
-      padding: 1px 6px;
-      border-radius: 4px;
-      letter-spacing: 0.2px;
-      user-select: none;
-      margin-left: auto;
-      margin-right: 6px;
+    .item-card.is-main-date .item-key {
+      color: var(--c-accent-red) !important;
+    }
+
+    .main-date-star {
+      color: var(--c-accent-red);
+      font-size: 0.95rem;
+      line-height: 1;
       flex-shrink: 0;
-    }
-
-    .presence-indicator.in-text {
-      background: rgba(98, 124, 140, 0.12);
-      color: var(--c-slate-blue);
-      border: 1px solid rgba(98, 124, 140, 0.3);
-    }
-
-    .presence-indicator.not-in-text {
-      background: rgba(152, 147, 152, 0.12);
-      color: var(--c-muted);
-      border: 1px dashed var(--c-border);
     }
 
     .item-icon {
@@ -1044,6 +1039,7 @@
       currentTopic: null,
       currentDates: [],
       currentTerms: [],
+      mainDatesSet: new Set(),
       activeSideTab: 'dates',
       isMobilePanelOpen: false,
       isSidePanelCollapsed: false
@@ -1170,8 +1166,15 @@
       }
     }
 
+    async function loadMainDates() {
+      const text = await fetchFileWithFallback('Dates/_MainDates.md', 'Date/_MainDates.md');
+      const items = parseKeyValueLines(text);
+      appState.mainDatesSet = new Set(items.map(i => i.key.trim().toLowerCase()));
+    }
+
     async function loadConfig() {
       try {
+        await loadMainDates();
         const response = await fetch('list.json');
         if (!response.ok) {
           throw new Error(`HTTP помилка: ${response.status}`);
@@ -1403,22 +1406,35 @@
 
     function createItemCard(item, type) {
       const card = document.createElement('div');
-      card.className = `item-card ${type === 'dates' ? 'date-card' : 'term-card'}`;
+      const isMainDate = type === 'dates' && appState.mainDatesSet.has(item.key.trim().toLowerCase());
+      card.className = `item-card ${type === 'dates' ? 'date-card' : 'term-card'}${isMainDate ? ' is-main-date' : ''}`;
       card.setAttribute('data-key', item.key.trim().toLowerCase());
       card.setAttribute('data-type', type);
 
       const header = document.createElement('div');
       header.className = 'item-header';
 
+      const keyWrapper = document.createElement('div');
+      keyWrapper.className = 'item-key-wrapper';
+
       const keySpan = document.createElement('span');
       keySpan.className = 'item-key';
       keySpan.textContent = item.key;
+
+      keyWrapper.appendChild(keySpan);
+
+      if (isMainDate) {
+        const starSpan = document.createElement('span');
+        starSpan.className = 'main-date-star';
+        starSpan.textContent = '★';
+        keyWrapper.appendChild(starSpan);
+      }
 
       const iconSpan = document.createElement('span');
       iconSpan.className = 'item-icon';
       iconSpan.textContent = '▼';
 
-      header.appendChild(keySpan);
+      header.appendChild(keyWrapper);
       header.appendChild(iconSpan);
 
       const valueDiv = document.createElement('div');
@@ -1434,31 +1450,6 @@
       });
 
       return card;
-    }
-
-    function updatePanelItemBadges() {
-      const cards = document.querySelectorAll('.item-card');
-      cards.forEach(card => {
-        const key = card.getAttribute('data-key');
-        const type = card.getAttribute('data-type');
-        const hasMatch = Boolean(findTextElement(key, type));
-
-        const oldBadge = card.querySelector('.presence-indicator');
-        if (oldBadge) {
-          oldBadge.remove();
-        }
-
-        const indicator = document.createElement('span');
-        indicator.className = `presence-indicator ${hasMatch ? 'in-text' : 'not-in-text'}`;
-        indicator.title = hasMatch ? 'Згадується в поточному конспекті' : 'Відсутня згадка в поточному конспекті';
-        indicator.textContent = hasMatch ? '✓ в тексті' : 'немає в тексті';
-
-        const header = card.querySelector('.item-header');
-        if (header) {
-          const icon = header.querySelector('.item-icon');
-          header.insertBefore(indicator, icon);
-        }
-      });
     }
 
     function bindTextInteractivity() {
@@ -1526,8 +1517,6 @@
           });
         }
       });
-
-      updatePanelItemBadges();
     }
 
     function activateSideItem(key, type) {
