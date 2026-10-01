@@ -1,2 +1,5 @@
 palette.txt
 .venv/
+sqldbase.txt
+__pycache__/
+backup_old_data/

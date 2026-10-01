@@ -1868,10 +1868,14 @@
     const appState = {
       blocks: [],
       topicsMap: {},
+      themesMap: {},
+      blocksData: [],
       currentBlock: null,
       currentTopic: null,
+      currentThemeId: null,
       currentDates: [],
       currentTerms: [],
+      currentImages: [],
       mainDatesSet: new Set(),
       activeSideTab: 'dates',
       activeGalleryTab: 'maps',
@@ -2096,55 +2100,33 @@
     }
 
     async function loadMainDates() {
-      const text = await fetchFileWithFallback('Dates/_MainDates.md', 'Date/_MainDates.md');
-      const items = parseKeyValueLines(text);
-      appState.mainDatesSet = new Set(items.map(i => i.key.trim().toLowerCase()));
+      appState.mainDatesSet.clear();
     }
 
     async function resolvePersonImage(name) {
-      const extensions = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
-      const folders = ['PersonImages', 'PresonImages'];
-      const candidates = [];
-      for (const f of folders) {
-        for (const ext of extensions) {
-          candidates.push(`${f}/${name}.${ext}`);
-        }
-      }
-
-      const checks = await Promise.all(
-        candidates.map(async url => ({ url, exists: await testImageExists(url) }))
-      );
-
-      const found = checks.find(c => c.exists);
-      return found ? found.url : null;
+      return null;
     }
 
     async function loadAllPersons() {
       appState.personsMap = {};
       appState.allPersonsByName.clear();
 
-      const promises = appState.blocks.map(async blockName => {
-        const text = await fetchFileWithFallback(`Persons/PS_${blockName}.md`, `Person/PS_${blockName}.md`);
-        const rawList = parseKeyValueLines(text);
+      try {
+        const response = await fetch('/api/all-persons');
+        if (!response.ok) {
+          throw new Error(`HTTP помилка: ${response.status}`);
+        }
+        const data = await response.json();
+        appState.personsMap = data;
 
-        const persons = await Promise.all(
-          rawList.map(async p => {
-            const imgUrl = await resolvePersonImage(p.key);
-            const obj = {
-              name: p.key,
-              bio: p.value,
-              imageUrl: imgUrl,
-              block: blockName
-            };
-            appState.allPersonsByName.set(p.key.trim().toLowerCase(), { block: blockName, person: obj });
-            return obj;
-          })
-        );
-
-        appState.personsMap[blockName] = persons;
-      });
-
-      await Promise.all(promises);
+        Object.keys(data).forEach(blockName => {
+          (data[blockName] || []).forEach(p => {
+            appState.allPersonsByName.set(p.name.trim().toLowerCase(), { block: blockName, person: p });
+          });
+        });
+      } catch (err) {
+        console.error('Помилка завантаження персоналій:', err);
+      }
     }
 
     function openPersonsModal(blockName, targetPerson) {
@@ -2816,26 +2798,33 @@
     async function loadConfig() {
       try {
         await loadMainDates();
-        const response = await fetch('list.json');
+        const response = await fetch('/api/blocks');
         if (!response.ok) {
           throw new Error(`HTTP помилка: ${response.status}`);
         }
         const data = await response.json();
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-          appState.topicsMap = data;
-          appState.blocks = Object.keys(data);
-          await loadAllPersons();
-        }
-        parseConfig(data);
+        appState.blocksData = data;
+        appState.topicsMap = {};
+        appState.themesMap = {};
+        appState.blocks = [];
+        data.forEach(block => {
+          appState.blocks.push(block.name);
+          appState.topicsMap[block.name] = (block.themes || []).map(t => t.name);
+          (block.themes || []).forEach(t => {
+            appState.themesMap[`${block.name}_${t.name}`] = t.id;
+          });
+        });
+        await loadAllPersons();
+        parseConfig(appState.topicsMap);
       } catch (err) {
-        console.error('Не вдалося завантажити list.json:', err);
-        handleFetchError(err, 'list.json');
+        console.error('Не вдалося завантажити дані:', err);
+        handleFetchError(err, '/api/blocks');
       }
     }
 
     function parseConfig(data) {
       if (!data || typeof data !== 'object' || Array.isArray(data)) {
-        showError('Некоректний формат list.json: очікується ієрархічний JSON-об\'єкт вигляду { "НазваБлоку": ["Тема1", "Тема2"] }.');
+        showError('Некоректний формат конфігурації блоків.');
         return;
       }
 
@@ -2843,7 +2832,7 @@
       appState.blocks = Object.keys(data);
 
       if (appState.blocks.length === 0) {
-        showError('У list.json не знайдено жодного блоку.');
+        showError('У базі даних не знайдено жодного блоку.');
         return;
       }
 
@@ -2889,6 +2878,7 @@
         appState.currentTopic = null;
         appState.currentDates = [];
         appState.currentTerms = [];
+        appState.currentImages = [];
         appState.galleryItems = [];
         renderSidePanel();
         renderGalleryPanel();
@@ -2928,13 +2918,13 @@
 
       updatePathDisplay();
 
-      await Promise.all([
-        loadNoteMarkdown(appState.currentBlock, appState.currentTopic),
-        loadDatesAndTerms(appState.currentBlock, appState.currentTopic)
-      ]);
+      const themeId = appState.themesMap[`${appState.currentBlock}_${topicName}`];
+      if (!themeId) {
+        showError(`Тему "${topicName}" не знайдено.`);
+        return;
+      }
 
-      bindTextInteractivity();
-      await loadGalleryImages(appState.currentBlock, appState.currentTopic);
+      await loadThemeData(themeId);
     }
 
     function updatePathDisplay() {
@@ -2942,94 +2932,142 @@
       document.getElementById('activeTopicLabel').textContent = appState.currentTopic || '—';
     }
 
-    async function loadNoteMarkdown(block, topic) {
+    async function loadThemeData(themeId) {
+      appState.currentThemeId = themeId;
       const contentEl = document.getElementById('noteContent');
       contentEl.innerHTML = `
         <div class="state-message">
           <div class="spinner"></div>
-          <p>Завантаження: <strong>NT_${escapeHtml(block)}_${escapeHtml(topic)}.md</strong>...</p>
+          <p>Завантаження конспекту...</p>
         </div>
       `;
 
-      const fileName = `NT_${block}_${topic}.md`;
-      const filePath = `Notes/${fileName}`;
-
       try {
-        const response = await fetch(filePath);
+        const response = await fetch(`/api/theme/${themeId}`);
         if (!response.ok) {
-          throw new Error(`Файл не знайдено (${response.status})`);
+          throw new Error(`Помилка завантаження теми (${response.status})`);
         }
-        let markdownText = await response.text();
+        const themeData = await response.json();
+        appState.currentDates = themeData.dates || [];
+        appState.currentTerms = themeData.terms || [];
+        appState.currentImages = themeData.images || [];
+
+        renderSidePanel();
+
+        let markdownText = themeData.markdown || '';
+        const imagesByDocName = new Map();
+        appState.currentImages.forEach(img => {
+          if (img.doc_name) {
+            imagesByDocName.set(img.doc_name.trim().toLowerCase(), img);
+          }
+        });
+
         const inlineImgRegex = /!___([^\r\n]+?)___/g;
         markdownText = markdownText.replace(inlineImgRegex, (match, imgName) => {
           const cleanName = imgName.trim();
-          return `![${cleanName}](/Images/maps/${block}_${topic}_${cleanName}.png)`;
+          const matched = imagesByDocName.get(cleanName.toLowerCase());
+          if (matched && matched.url) {
+            return `![${matched.name}](${matched.url})`;
+          }
+          return `![${cleanName}](/Images/${cleanName})`;
         });
+
         contentEl.innerHTML = marked.parse(markdownText);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        buildGalleryAndBindImages(imagesByDocName);
+        bindTextInteractivity();
       } catch (err) {
-        console.error('Помилка завантаження конспекту:', err);
-        handleFetchError(err, filePath);
+        console.error('Помилка завантаження теми:', err);
+        showError(err.message || 'Не вдалося завантажити тему');
       }
     }
 
-    async function fetchFileWithFallback(path1, path2) {
-      try {
-        const res = await fetch(path1);
-        if (res.ok) {
-          return await res.text();
-        }
-      } catch (err) {}
-      if (path2) {
-        try {
-          const res = await fetch(path2);
-          if (res.ok) {
-            return await res.text();
+    function buildGalleryAndBindImages(imagesByDocName) {
+      const noteContent = document.getElementById('noteContent');
+      if (!noteContent) return;
+
+      const galleryMap = new Map();
+
+      const noteImgs = noteContent.querySelectorAll('img');
+      noteImgs.forEach(img => {
+        const alt = (img.getAttribute('alt') || '').trim();
+        const src = (img.getAttribute('src') || '').trim();
+        let matched = null;
+        if (alt && imagesByDocName.has(alt.toLowerCase())) {
+          matched = imagesByDocName.get(alt.toLowerCase());
+        } else {
+          for (const item of appState.currentImages) {
+            if (item.url && src.includes(item.url)) {
+              matched = item;
+              break;
+            }
           }
-        } catch (err) {}
-      }
-      return null;
-    }
-
-    function parseKeyValueLines(text) {
-      if (!text) return [];
-      const lines = text.split(/\r?\n/);
-      const result = [];
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line || !line.includes('||')) continue;
-        const separatorIndex = line.indexOf('||');
-        const key = line.substring(0, separatorIndex).trim();
-        const value = line.substring(separatorIndex + 2).trim();
-        if (key) {
-          result.push({ key, value });
         }
-      }
-      return result;
-    }
 
-    async function loadDatesAndTerms(block, topic) {
-      const datesPane = document.getElementById('datesTabPane');
-      const termsPane = document.getElementById('termsTabPane');
-      if (datesPane) {
-        datesPane.innerHTML = '<div class="panel-empty-state">Завантаження дат...</div>';
-      }
-      if (termsPane) {
-        termsPane.innerHTML = '<div class="panel-empty-state">Завантаження термінів...</div>';
-      }
+        const docName = matched ? matched.doc_name : alt;
+        const displayName = matched ? matched.name : alt;
+        const typeStr = (matched && matched.type === 1) ? 'monuments' : 'maps';
 
-      const dateFileName = `DT_${block}_${topic}.md`;
-      const termFileName = `TM_${block}_${topic}.md`;
+        img.classList.add('interactive-note-image');
+        img.setAttribute('data-image-name', docName.toLowerCase());
+        img.setAttribute('data-image-type', typeStr);
+        img.setAttribute('title', 'Натисніть, щоб переглянути в галереї');
 
-      const [dateText, termText] = await Promise.all([
-        fetchFileWithFallback(`Dates/${dateFileName}`, `Date/${dateFileName}`),
-        fetchFileWithFallback(`Terms/${termFileName}`, `Term/${termFileName}`)
-      ]);
+        img.addEventListener('click', () => {
+          openGalleryToImage(docName.toLowerCase(), typeStr);
+        });
 
-      appState.currentDates = parseKeyValueLines(dateText);
-      appState.currentTerms = parseKeyValueLines(termText);
+        galleryMap.set(docName.toLowerCase(), {
+          name: displayName,
+          docName: docName,
+          type: typeStr,
+          url: matched ? matched.url : src
+        });
+      });
 
-      renderSidePanel();
+      const boldItalics = noteContent.querySelectorAll('em strong, strong em');
+      boldItalics.forEach(el => {
+        const text = el.textContent.trim();
+        const lower = text.toLowerCase();
+        if (text && imagesByDocName.has(lower)) {
+          const matched = imagesByDocName.get(lower);
+          const typeStr = matched.type === 1 ? 'monuments' : 'maps';
+
+          el.classList.add('interactive-image-name');
+          el.setAttribute('data-image-name', matched.doc_name.toLowerCase());
+          el.setAttribute('data-image-type', typeStr);
+          el.setAttribute('title', 'Натисніть, щоб відкрити зображення в галереї');
+
+          el.addEventListener('click', () => {
+            openGalleryToImage(matched.doc_name.toLowerCase(), typeStr);
+          });
+
+          if (!galleryMap.has(lower)) {
+            galleryMap.set(lower, {
+              name: matched.name,
+              docName: matched.doc_name,
+              type: typeStr,
+              url: matched.url
+            });
+          }
+        }
+      });
+
+      appState.currentImages.forEach(img => {
+        const lower = img.doc_name.toLowerCase();
+        if (!galleryMap.has(lower)) {
+          galleryMap.set(lower, {
+            name: img.name,
+            docName: img.doc_name,
+            type: img.type === 1 ? 'monuments' : 'maps',
+            url: img.url
+          });
+        }
+      });
+
+      appState.galleryItems = Array.from(galleryMap.values());
+      renderGalleryPanel();
     }
 
     function renderSidePanel() {
@@ -3070,7 +3108,7 @@
 
     function createItemCard(item, type) {
       const card = document.createElement('div');
-      const isMainDate = type === 'dates' && appState.mainDatesSet.has(item.key.trim().toLowerCase());
+      const isMainDate = type === 'dates' && (item.is_mandority === 1 || appState.mainDatesSet.has(item.key.trim().toLowerCase()));
       card.className = `item-card ${type === 'dates' ? 'date-card' : 'term-card'}${isMainDate ? ' is-main-date' : ''}`;
       card.setAttribute('data-key', item.key.trim().toLowerCase());
       card.setAttribute('data-type', type);
@@ -3116,98 +3154,6 @@
       return card;
     }
 
-    function testImageExists(url) {
-      return new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = url;
-      });
-    }
-
-    async function resolveImageCandidate(block, topic, name) {
-      const extensions = ['png', 'jpg', 'jpeg', 'webp', 'svg'];
-      const candidates = [];
-      for (const ext of extensions) {
-        candidates.push({ type: 'maps', url: `Images/maps/${block}_${topic}_${name}.${ext}`, name: name });
-        candidates.push({ type: 'monuments', url: `Images/monuments/${block}_${topic}_${name}.${ext}`, name: name });
-      }
-
-      const checks = await Promise.all(
-        candidates.map(async c => ({ ...c, exists: await testImageExists(c.url) }))
-      );
-
-      return checks.find(c => c.exists) || null;
-    }
-
-    async function loadGalleryImages(block, topic) {
-      const noteContent = document.getElementById('noteContent');
-      if (!noteContent) return;
-
-      const galleryMap = new Map();
-
-      const noteImgs = noteContent.querySelectorAll('img');
-      noteImgs.forEach(img => {
-        const src = img.getAttribute('src') || '';
-        const match = src.match(/Images\/(maps|monuments|Type1|Type2)\/(.+)$/i);
-        if (match) {
-          const rawType = match[1].toLowerCase();
-          const type = (rawType === 'monuments' || rawType === 'type2') ? 'monuments' : 'maps';
-          const filename = match[2];
-          const prefix = `${block}_${topic}_`;
-          let name = filename;
-          if (filename.startsWith(prefix)) {
-            name = filename.substring(prefix.length);
-          }
-          name = name.replace(/\.[^/.]+$/, "");
-
-          img.classList.add('interactive-note-image');
-          img.setAttribute('data-image-name', name.toLowerCase());
-          img.setAttribute('data-image-type', type);
-          img.setAttribute('title', 'Натисніть, щоб переглянути в галереї');
-
-          img.addEventListener('click', () => {
-            openGalleryToImage(name.toLowerCase(), type);
-          });
-
-          galleryMap.set(name.toLowerCase(), {
-            name: name,
-            type: type,
-            url: src
-          });
-        }
-      });
-
-      const boldItalics = noteContent.querySelectorAll('em strong, strong em');
-      const pendingNames = [];
-
-      boldItalics.forEach(el => {
-        const text = el.textContent.trim();
-        if (text && !galleryMap.has(text.toLowerCase())) {
-          pendingNames.push({ el, text });
-        }
-      });
-
-      for (const item of pendingNames) {
-        const resolved = await resolveImageCandidate(block, topic, item.text);
-        if (resolved) {
-          galleryMap.set(item.text.toLowerCase(), resolved);
-
-          item.el.classList.add('interactive-image-name');
-          item.el.setAttribute('data-image-name', item.text.toLowerCase());
-          item.el.setAttribute('data-image-type', resolved.type);
-          item.el.setAttribute('title', 'Натисніть, щоб відкрити зображення в галереї');
-
-          item.el.addEventListener('click', () => {
-            openGalleryToImage(item.text.toLowerCase(), resolved.type);
-          });
-        }
-      }
-
-      appState.galleryItems = Array.from(galleryMap.values());
-      renderGalleryPanel();
-    }
-
     function renderGalleryPanel() {
       const mapsPane = document.getElementById('galleryMapsPane');
       const monumentsPane = document.getElementById('galleryMonumentsPane');
@@ -3250,7 +3196,8 @@
     function createGalleryCard(item) {
       const card = document.createElement('div');
       card.className = 'gallery-card';
-      card.setAttribute('data-name', item.name.toLowerCase());
+      const searchKey = (item.docName || item.name || '').toLowerCase();
+      card.setAttribute('data-name', searchKey);
       card.setAttribute('data-type', item.type);
 
       const imgWrap = document.createElement('div');
@@ -3271,14 +3218,14 @@
       card.appendChild(caption);
 
       card.addEventListener('click', () => {
-        scrollToNoteImage(item.name, item.type, card);
+        scrollToNoteImage(searchKey, item.type, card);
       });
 
       return card;
     }
 
     function openGalleryToImage(name, type) {
-      const normalizedType = (type === 'monuments' || type === 'Type2') ? 'monuments' : 'maps';
+      const normalizedType = (type === 'monuments' || type === 'Type2' || type === 1) ? 'monuments' : 'maps';
       if (appState.isGalleryCollapsed) {
         toggleGalleryPanel(false);
       }
@@ -3293,7 +3240,8 @@
       const cards = pane.querySelectorAll('.gallery-card');
       let targetCard = null;
       cards.forEach(card => {
-        if (card.getAttribute('data-name') === name.toLowerCase()) {
+        const cardName = card.getAttribute('data-name') || '';
+        if (cardName === name.toLowerCase() || cardName.includes(name.toLowerCase()) || name.toLowerCase().includes(cardName)) {
           targetCard = card;
           card.classList.add('is-highlighted');
           setTimeout(() => {
@@ -3318,9 +3266,10 @@
       const noteImgs = noteContent.querySelectorAll('img');
       let targetImg = null;
       for (let i = 0; i < noteImgs.length; i++) {
-        const attrName = noteImgs[i].getAttribute('data-image-name') || '';
-        const src = noteImgs[i].getAttribute('src') || '';
-        if (attrName === lowerName || src.toLowerCase().includes(lowerName)) {
+        const attrName = (noteImgs[i].getAttribute('data-image-name') || '').toLowerCase();
+        const alt = (noteImgs[i].getAttribute('alt') || '').toLowerCase();
+        const src = (noteImgs[i].getAttribute('src') || '').toLowerCase();
+        if (attrName === lowerName || alt === lowerName || src.includes(lowerName)) {
           targetImg = noteImgs[i];
           break;
         }
@@ -3339,7 +3288,8 @@
       const textMatches = noteContent.querySelectorAll('.interactive-image-name');
       let targetText = null;
       for (let i = 0; i < textMatches.length; i++) {
-        if ((textMatches[i].getAttribute('data-image-name') || '') === lowerName) {
+        const docName = (textMatches[i].getAttribute('data-image-name') || '').toLowerCase();
+        if (docName === lowerName) {
           targetText = textMatches[i];
           break;
         }
