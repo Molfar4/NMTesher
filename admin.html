@@ -605,6 +605,16 @@
       <div class="section-card">
         <div class="section-header-row">
           <div class="section-title">
+            <span>💬 Цитати</span>
+          </div>
+          <button id="addQuoteBtn" class="btn" type="button">+ Додати цитату</button>
+        </div>
+        <div id="quotesListContainer"></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
             <span>🖼️ Зображення</span>
           </div>
           <button id="addImageBtn" class="btn" type="button">+ Додати зображення</button>
@@ -726,6 +736,7 @@
             <div class="draft-stats">
               <span class="stat-chip">📅 ${d.dates_count} дат</span>
               <span class="stat-chip">📖 ${d.terms_count} термінів</span>
+              <span class="stat-chip">💬 ${d.quotes_count || 0} цитат</span>
               <span class="stat-chip">🖼️ ${d.images_count} зображень</span>
               <span class="stat-chip">👤 ${d.persons_count} діячів</span>
             </div>
@@ -1027,6 +1038,7 @@
 
         renderDatesEditor(activeDraft.dates || []);
         renderTermsEditor(activeDraft.terms || []);
+        renderQuotesEditor(activeDraft.quotes || []);
         renderImagesEditor(activeDraft.images || []);
         renderPersonsEditor(activeDraft.persons || []);
 
@@ -1063,6 +1075,7 @@
 
         renderDatesEditor(themeData.dates || []);
         renderTermsEditor(themeData.terms || []);
+        renderQuotesEditor(themeData.quotes || []);
         renderImagesEditor(themeData.images || []);
         renderPersonsEditor(themeData.persons || []);
 
@@ -1103,6 +1116,7 @@
             markdown: activeDraft.raw_markdown || '',
             current_dates: activeDraft.dates || [],
             current_terms: activeDraft.terms || [],
+            current_quotes: activeDraft.quotes || [],
             current_images: activeDraft.images || [],
             current_persons: activeDraft.persons || []
           })
@@ -1112,11 +1126,13 @@
 
         activeDraft.dates = result.dates;
         activeDraft.terms = result.terms;
+        activeDraft.quotes = result.quotes;
         activeDraft.images = result.images;
         activeDraft.persons = result.persons;
 
         renderDatesEditor(activeDraft.dates);
         renderTermsEditor(activeDraft.terms);
+        renderQuotesEditor(activeDraft.quotes);
         renderImagesEditor(activeDraft.images);
         renderPersonsEditor(activeDraft.persons);
 
@@ -1203,6 +1219,44 @@
           collectCurrentEditorData();
           activeDraft.terms.splice(Number(b.dataset.idx), 1);
           renderTermsEditor(activeDraft.terms);
+        });
+      });
+    }
+
+    function renderQuotesEditor(quotes) {
+      const container = document.getElementById('quotesListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      if (!quotes || quotes.length === 0) {
+        container.innerHTML = '<div style="color: var(--c-muted); font-size: 0.85rem; padding: 6px 0;">Цитат немає.</div>';
+        return;
+      }
+      quotes.forEach((q, idx) => {
+        const row = document.createElement('div');
+        row.className = 'item-card-row quote-editor-row';
+        row.innerHTML = `
+          <div class="row-two-cols">
+            <div>
+              <label class="form-label">Цитата:</label>
+              <textarea class="form-textarea quote-input-name" data-idx="${idx}" style="min-height: 60px;">${escapeHtml(q.name || '')}</textarea>
+            </div>
+            <div>
+              <label class="form-label">Пояснення / контекст:</label>
+              <textarea class="form-textarea quote-input-desc" data-idx="${idx}" style="min-height: 60px;">${escapeHtml(q.description || '')}</textarea>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+            <button class="btn btn-danger remove-quote-btn" data-idx="${idx}" type="button" style="padding: 4px 10px; font-size: 0.78rem;">Видалити</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      container.querySelectorAll('.remove-quote-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          collectCurrentEditorData();
+          activeDraft.quotes.splice(Number(b.dataset.idx), 1);
+          renderQuotesEditor(activeDraft.quotes);
         });
       });
     }
@@ -1339,6 +1393,16 @@
         });
       });
 
+      const quoteNames = document.querySelectorAll('.quote-input-name');
+      const quoteDescs = document.querySelectorAll('.quote-input-desc');
+      activeDraft.quotes = [];
+      quoteNames.forEach((input, i) => {
+        activeDraft.quotes.push({
+          name: input.value.trim(),
+          description: quoteDescs[i] ? quoteDescs[i].value.trim() : ''
+        });
+      });
+
       const imgDocs = document.querySelectorAll('.image-input-doc');
       const imgNames = document.querySelectorAll('.image-input-name');
       const imgTypes = document.querySelectorAll('.image-input-type');
@@ -1383,6 +1447,7 @@
       formData.append('markdown', activeDraft.raw_markdown);
       formData.append('dates', JSON.stringify(activeDraft.dates));
       formData.append('terms', JSON.stringify(activeDraft.terms));
+      formData.append('quotes', JSON.stringify(activeDraft.quotes));
       formData.append('images', JSON.stringify(activeDraft.images));
       formData.append('persons', JSON.stringify(activeDraft.persons));
 
@@ -1557,6 +1622,13 @@
       if (!activeDraft.terms) activeDraft.terms = [];
       activeDraft.terms.push({ name: '', description: '' });
       renderTermsEditor(activeDraft.terms);
+    });
+
+    document.getElementById('addQuoteBtn').addEventListener('click', () => {
+      collectCurrentEditorData();
+      if (!activeDraft.quotes) activeDraft.quotes = [];
+      activeDraft.quotes.push({ name: '', description: '' });
+      renderQuotesEditor(activeDraft.quotes);
     });
 
     document.getElementById('addImageBtn').addEventListener('click', () => {

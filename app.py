@@ -177,6 +177,15 @@ def init_db():
             status TEXT DEFAULT 'pending'
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS Quotes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT NOT NULL,
+            theme_id INTEGER,
+            FOREIGN KEY (theme_id) REFERENCES Themes(Theme_Id)
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -247,7 +256,32 @@ def scan_markdown_tokens(markdown):
         if d and d not in dates:
             dates.append(d)
 
-    return dates, terms, images, raw_persons
+    quotes = []
+    current_quote_lines = []
+    for line in markdown.splitlines():
+        stripped = line.strip()
+        if stripped.startswith('>'):
+            content = re.sub(r'^>+\s*', '', stripped)
+            if content:
+                current_quote_lines.append(content)
+            else:
+                if current_quote_lines:
+                    q_text = ' '.join(current_quote_lines).strip()
+                    if q_text and q_text not in quotes:
+                        quotes.append(q_text)
+                    current_quote_lines = []
+        else:
+            if current_quote_lines:
+                q_text = ' '.join(current_quote_lines).strip()
+                if q_text and q_text not in quotes:
+                    quotes.append(q_text)
+                current_quote_lines = []
+    if current_quote_lines:
+        q_text = ' '.join(current_quote_lines).strip()
+        if q_text and q_text not in quotes:
+            quotes.append(q_text)
+
+    return dates, terms, images, raw_persons, quotes
 
 @app.route('/')
 def index():
@@ -351,6 +385,12 @@ def get_theme(theme_id):
         (theme_id,)
     ).fetchall()
 
+    quotes_rows = conn.execute(
+        'SELECT id, name, description '
+        'FROM Quotes WHERE theme_id = ? ORDER BY id',
+        (theme_id,)
+    ).fetchall()
+
     conn.close()
 
     block_id = theme['block_id']
@@ -394,7 +434,15 @@ def get_theme(theme_id):
             }
             for t in terms_rows
         ],
-        'images': images_list
+        'images': images_list,
+        'quotes': [
+            {
+                'id': q['id'],
+                'name': q['name'],
+                'description': q['description']
+            }
+            for q in quotes_rows
+        ]
     })
 
 @app.route('/api/persons/<int:block_id>')
@@ -448,6 +496,30 @@ def get_all_persons():
 
     return jsonify(result)
 
+@app.route('/api/all-quotes')
+def get_all_quotes():
+    conn = get_db_connection()
+    themes_rows = conn.execute('SELECT Theme_Id, theme_name FROM Themes ORDER BY Theme_Id').fetchall()
+    quotes_rows = conn.execute(
+        'SELECT q.id, q.name, q.description, q.theme_id, t.theme_name '
+        'FROM Quotes q '
+        'JOIN Themes t ON q.theme_id = t.Theme_Id '
+        'ORDER BY t.Theme_Id, q.id'
+    ).fetchall()
+    conn.close()
+
+    result = {t['theme_name']: [] for t in themes_rows}
+    for q in quotes_rows:
+        result.setdefault(q['theme_name'], []).append({
+            'id': q['id'],
+            'name': q['name'],
+            'description': q['description'],
+            'theme_id': q['theme_id'],
+            'theme_name': q['theme_name']
+        })
+
+    return jsonify(result)
+
 @app.route('/api/scan-note', methods=['POST'])
 def scan_note():
     data = request.get_json(silent=True) or {}
@@ -470,7 +542,7 @@ def scan_note():
             conn.close()
             return jsonify({'error': f'Тема "{theme_name}" вже існує в блоці "{block["Block_Name"]}"'}), 400
 
-    dates, terms, images, raw_persons = scan_markdown_tokens(markdown)
+    dates, terms, images, raw_persons, quotes = scan_markdown_tokens(markdown)
 
     existing_persons_in_block = set()
     if block:
@@ -491,7 +563,8 @@ def scan_note():
         'dates': [{'name': d, 'description': '', 'is_mandatory': 0} for d in dates],
         'terms': [{'name': t, 'description': ''} for t in terms],
         'images': list(images.values()),
-        'persons': persons_list
+        'persons': persons_list,
+        'quotes': [{'name': q, 'description': ''} for q in quotes]
     })
 
 @app.route('/api/drafts', methods=['POST'])
@@ -520,12 +593,14 @@ def create_draft():
     terms_raw = request.form.get('terms', '[]')
     images_raw = request.form.get('images', '[]')
     persons_raw = request.form.get('persons', '[]')
+    quotes_raw = request.form.get('quotes', '[]')
 
     try:
         dates_data = json.loads(dates_raw)
         terms_data = json.loads(terms_raw)
         images_data = json.loads(images_raw)
         persons_data = json.loads(persons_raw)
+        quotes_data = json.loads(quotes_raw)
     except Exception as e:
         conn.close()
         return jsonify({'error': f'Некоректний формат JSON даних: {str(e)}'}), 400
@@ -565,7 +640,8 @@ def create_draft():
         'dates': dates_data,
         'terms': terms_data,
         'images': images_data,
-        'persons': persons_data
+        'persons': persons_data,
+        'quotes': quotes_data
     }
 
     conn.execute('UPDATE Drafts SET data_json = ? WHERE id = ?', (json.dumps(final_payload, ensure_ascii=False), draft_id))
@@ -617,7 +693,8 @@ def get_admin_drafts():
             'dates_count': len(d.get('dates', [])),
             'terms_count': len(d.get('terms', [])),
             'images_count': len(d.get('images', [])),
-            'persons_count': len(d.get('persons', []))
+            'persons_count': len(d.get('persons', [])),
+            'quotes_count': len(d.get('quotes', []))
         })
     return jsonify(result)
 
@@ -646,7 +723,8 @@ def get_admin_draft(draft_id):
         'dates': d.get('dates', []),
         'terms': d.get('terms', []),
         'images': d.get('images', []),
-        'persons': d.get('persons', [])
+        'persons': d.get('persons', []),
+        'quotes': d.get('quotes', [])
     })
 
 @app.route('/api/admin/drafts/<int:draft_id>/update', methods=['POST'])
@@ -671,6 +749,7 @@ def update_admin_draft(draft_id):
         terms_data = json.loads(request.form.get('terms', '[]'))
         images_data = json.loads(request.form.get('images', '[]'))
         persons_data = json.loads(request.form.get('persons', '[]'))
+        quotes_data = json.loads(request.form.get('quotes', '[]'))
     except Exception as e:
         conn.close()
         return jsonify({'error': f'Некоректний формат JSON: {str(e)}'}), 400
@@ -705,7 +784,8 @@ def update_admin_draft(draft_id):
         'dates': dates_data,
         'terms': terms_data,
         'images': images_data,
-        'persons': persons_data
+        'persons': persons_data,
+        'quotes': quotes_data
     }
 
     conn.execute(
@@ -753,6 +833,7 @@ def publish_admin_draft(draft_id):
     terms = data.get('terms', [])
     images = data.get('images', [])
     persons = data.get('persons', [])
+    quotes = data.get('quotes', [])
 
     cur = conn.cursor()
     block = cur.execute('SELECT Block_Id, Block_Name FROM Blocks WHERE LOWER(Block_Name) = LOWER(?)', (block_name,)).fetchone()
@@ -782,6 +863,12 @@ def publish_admin_draft(draft_id):
         t_desc = t.get('description', '').strip()
         if t_name:
             cur.execute('INSERT INTO Terms (Term_name, Term_description, theme_id) VALUES (?, ?, ?)', (t_name, t_desc, theme_id))
+
+    for q in quotes:
+        q_name = q.get('name', '').strip()
+        q_desc = q.get('description', '').strip()
+        if q_name:
+            cur.execute('INSERT INTO Quotes (name, description, theme_id) VALUES (?, ?, ?)', (q_name, q_desc, theme_id))
 
     os.makedirs(os.path.join(BASE_DIR, 'PersonImages'), exist_ok=True)
     for p in persons:
@@ -1005,6 +1092,12 @@ def get_admin_theme_for_edit(theme_id):
         'FROM Person WHERE block_id = ? ORDER BY Person_Id',
         (block_id,)
     ).fetchall()
+
+    quotes_rows = conn.execute(
+        'SELECT id, name, description '
+        'FROM Quotes WHERE theme_id = ? ORDER BY id',
+        (theme_id,)
+    ).fetchall()
     conn.close()
 
     persons_list = []
@@ -1041,7 +1134,15 @@ def get_admin_theme_for_edit(theme_id):
             for t in terms_rows
         ],
         'images': images_list,
-        'persons': persons_list
+        'persons': persons_list,
+        'quotes': [
+            {
+                'id': q['id'],
+                'name': q['name'],
+                'description': q['description']
+            }
+            for q in quotes_rows
+        ]
     })
 
 @app.route('/api/admin/themes/<int:theme_id>/update', methods=['POST'])
@@ -1091,6 +1192,7 @@ def update_admin_theme(theme_id):
         terms_data = json.loads(request.form.get('terms', '[]'))
         images_data = json.loads(request.form.get('images', '[]'))
         persons_data = json.loads(request.form.get('persons', '[]'))
+        quotes_data = json.loads(request.form.get('quotes', '[]'))
     except Exception as e:
         conn.close()
         return jsonify({'error': f'Некоректний формат JSON: {str(e)}'}), 400
@@ -1109,6 +1211,13 @@ def update_admin_theme(theme_id):
         t_desc = t.get('description', '').strip()
         if t_name:
             cur.execute('INSERT INTO Terms (Term_name, Term_description, theme_id) VALUES (?, ?, ?)', (t_name, t_desc, theme_id))
+
+    cur.execute('DELETE FROM Quotes WHERE theme_id = ?', (theme_id,))
+    for q in quotes_data:
+        q_name = q.get('name', '').strip()
+        q_desc = q.get('description', '').strip()
+        if q_name:
+            cur.execute('INSERT INTO Quotes (name, description, theme_id) VALUES (?, ?, ?)', (q_name, q_desc, theme_id))
 
     for idx, per in enumerate(persons_data):
         p_name = per.get('name', '').strip()
@@ -1215,6 +1324,7 @@ def delete_admin_theme(theme_id):
     cur = conn.cursor()
     cur.execute('DELETE FROM Dates WHERE theme_id = ?', (theme_id,))
     cur.execute('DELETE FROM Terms WHERE theme_id = ?', (theme_id,))
+    cur.execute('DELETE FROM Quotes WHERE theme_id = ?', (theme_id,))
 
     img_rows = cur.execute('SELECT Image_Id, image_type FROM Images WHERE theme_id = ?', (theme_id,)).fetchall()
     img_dir = os.path.join(BASE_DIR, 'Images')
@@ -1251,8 +1361,9 @@ def admin_reparse_markdown():
     current_terms = data.get('current_terms', [])
     current_images = data.get('current_images', [])
     current_persons = data.get('current_persons', [])
+    current_quotes = data.get('current_quotes', [])
 
-    dates, terms, images, raw_persons = scan_markdown_tokens(markdown)
+    dates, terms, images, raw_persons, quotes = scan_markdown_tokens(markdown)
 
     d_map = {d.get('name', '').strip().lower(): d for d in current_dates if d.get('name')}
     final_dates = []
@@ -1288,11 +1399,20 @@ def admin_reparse_markdown():
         else:
             final_persons.append({'name': p, 'bio': ''})
 
+    q_map = {q.get('name', '').strip().lower(): q for q in current_quotes if q.get('name')}
+    final_quotes = []
+    for q in quotes:
+        if q.lower() in q_map:
+            final_quotes.append(q_map[q.lower()])
+        else:
+            final_quotes.append({'name': q, 'description': ''})
+
     return jsonify({
         'dates': final_dates,
         'terms': final_terms,
         'images': final_images,
-        'persons': final_persons
+        'persons': final_persons,
+        'quotes': final_quotes
     })
 
 @app.route('/api/admin/suggestions')

@@ -1612,6 +1612,11 @@
           <span>Адмін</span>
         </a>
 
+        <button id="openQuotesBtn" class="toggle-nav-btn" aria-label="Відкрити цитати" title="Цитати">
+          <span>💬</span>
+          <span>Цитати</span>
+        </button>
+
         <button id="openPersonsBtn" class="toggle-nav-btn" aria-label="Відкрити список людей" title="Видатні постаті">
           <span>👤</span>
           <span>Люди</span>
@@ -1779,6 +1784,28 @@
     </div>
   </div>
 
+  <div class="persons-modal-overlay" id="quotesModalOverlay">
+    <div class="persons-modal" id="quotesModal" style="max-width: 920px;">
+      <div class="persons-modal-header">
+        <div class="persons-modal-title">
+          <span>💬 Цитати</span>
+        </div>
+        <div style="flex: 1; max-width: 320px; margin: 0 16px;">
+          <input type="text" id="quotesSearchInput" class="form-input" placeholder="Шукати в цитатах та поясненнях..." style="padding: 6px 12px; font-size: 0.85rem;" />
+        </div>
+        <button class="persons-modal-close" id="closeQuotesModalBtn" aria-label="Закрити">&times;</button>
+      </div>
+
+      <div class="persons-blocks-tabs" id="quotesThemesTabs" style="overflow-x: auto; white-space: nowrap;">
+      </div>
+
+      <div class="persons-modal-body" id="quotesModalBody" style="padding: 16px 20px; overflow-y: auto; max-height: calc(85vh - 130px);">
+        <div id="quotesCardsList" style="display: flex; flex-direction: column; gap: 12px;">
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="persons-modal-overlay" id="addNoteModalOverlay">
     <div class="persons-modal" id="addNoteModal" style="max-width: 920px;">
       <div class="persons-modal-header">
@@ -1838,6 +1865,11 @@
           <div class="scan-section" id="scanTermsSection" style="display: none;">
             <div class="scan-section-title">📖 Терміни:</div>
             <div id="scanTermsList"></div>
+          </div>
+
+          <div class="scan-section" id="scanQuotesSection" style="display: none;">
+            <div class="scan-section-title">💬 Цитати:</div>
+            <div id="scanQuotesList"></div>
           </div>
 
           <div class="scan-section" id="scanImagesSection" style="display: none;">
@@ -1930,6 +1962,10 @@
       isGalleryCollapsed: false,
       isMobileSideOpen: false,
       isMobileGalleryOpen: false,
+      quotesMap: {},
+      activeQuotesTheme: null,
+      quotesSearchQuery: '',
+      currentQuotes: [],
       currentScanData: null
     };
 
@@ -2040,6 +2076,11 @@
       const personsModalOverlay = document.getElementById('personsModalOverlay');
       const personBackBtn = document.getElementById('personBackBtn');
 
+      const openQuotesBtn = document.getElementById('openQuotesBtn');
+      const closeQuotesModalBtn = document.getElementById('closeQuotesModalBtn');
+      const quotesModalOverlay = document.getElementById('quotesModalOverlay');
+      const quotesSearchInput = document.getElementById('quotesSearchInput');
+
       const overlay = document.getElementById('sidePanelOverlay');
 
       if (tabDatesBtn) {
@@ -2072,6 +2113,24 @@
       }
       if (dockedGalleryTab) {
         dockedGalleryTab.addEventListener('click', () => toggleGalleryPanel(false));
+      }
+
+      if (openQuotesBtn) {
+        openQuotesBtn.addEventListener('click', () => openQuotesModal(appState.currentTopic));
+      }
+      if (closeQuotesModalBtn) {
+        closeQuotesModalBtn.addEventListener('click', closeQuotesModal);
+      }
+      if (quotesModalOverlay) {
+        quotesModalOverlay.addEventListener('click', (e) => {
+          if (e.target === quotesModalOverlay) closeQuotesModal();
+        });
+      }
+      if (quotesSearchInput) {
+        quotesSearchInput.addEventListener('input', (e) => {
+          appState.quotesSearchQuery = e.target.value;
+          renderQuotesCardsList();
+        });
       }
 
       if (openPersonsBtn) {
@@ -2148,6 +2207,131 @@
 
     async function resolvePersonImage(name) {
       return null;
+    }
+
+    async function loadAllQuotes() {
+      appState.quotesMap = {};
+      try {
+        const response = await fetch('/api/all-quotes');
+        if (!response.ok) {
+          throw new Error(`HTTP помилка: ${response.status}`);
+        }
+        const data = await response.json();
+        appState.quotesMap = data;
+      } catch (err) {
+        console.error('Помилка завантаження цитат:', err);
+      }
+    }
+
+    async function openQuotesModal(preferredTheme = null) {
+      const overlay = document.getElementById('quotesModalOverlay');
+      if (!overlay) return;
+
+      await loadAllQuotes();
+
+      const themeNames = Object.keys(appState.quotesMap || {});
+      let selectedTheme = preferredTheme;
+      if (!selectedTheme || !appState.quotesMap[selectedTheme]) {
+        if (appState.currentTopic && appState.quotesMap[appState.currentTopic]) {
+          selectedTheme = appState.currentTopic;
+        } else if (themeNames.length > 0) {
+          selectedTheme = themeNames.find(t => (appState.quotesMap[t] || []).length > 0) || themeNames[0];
+        }
+      }
+
+      appState.activeQuotesTheme = selectedTheme;
+      const searchInput = document.getElementById('quotesSearchInput');
+      if (searchInput) {
+        searchInput.value = '';
+        appState.quotesSearchQuery = '';
+      }
+
+      renderQuotesThemeTabs(selectedTheme);
+      renderQuotesCardsList();
+      overlay.classList.add('is-visible');
+    }
+
+    function closeQuotesModal() {
+      const overlay = document.getElementById('quotesModalOverlay');
+      if (overlay) {
+        overlay.classList.remove('is-visible');
+      }
+    }
+
+    function renderQuotesThemeTabs(activeTheme) {
+      const container = document.getElementById('quotesThemesTabs');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const themeNames = Object.keys(appState.quotesMap || {});
+      themeNames.forEach(tName => {
+        const btn = document.createElement('button');
+        btn.className = `person-block-tab-btn${tName === activeTheme ? ' active' : ''}`;
+        const count = (appState.quotesMap[tName] || []).length;
+        btn.textContent = `${tName} (${count})`;
+        btn.setAttribute('data-theme', tName);
+        btn.addEventListener('click', () => {
+          appState.activeQuotesTheme = tName;
+          document.querySelectorAll('#quotesThemesTabs .person-block-tab-btn').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-theme') === tName);
+          });
+          renderQuotesCardsList();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderQuotesCardsList() {
+      const container = document.getElementById('quotesCardsList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const query = (appState.quotesSearchQuery || '').trim().toLowerCase();
+      let quotesToRender = [];
+
+      if (query) {
+        Object.entries(appState.quotesMap || {}).forEach(([tName, list]) => {
+          list.forEach(q => {
+            const matchName = (q.name || '').toLowerCase().includes(query);
+            const matchDesc = (q.description || '').toLowerCase().includes(query);
+            if (matchName || matchDesc) {
+              quotesToRender.push({ ...q, theme_name: tName });
+            }
+          });
+        });
+      } else {
+        const currentList = appState.quotesMap[appState.activeQuotesTheme] || [];
+        quotesToRender = currentList.map(q => ({ ...q, theme_name: appState.activeQuotesTheme }));
+      }
+
+      if (quotesToRender.length === 0) {
+        container.innerHTML = query 
+          ? `<div class="panel-empty-state">За запитом "${escapeHtml(query)}" нічого не знайдено</div>`
+          : '<div class="panel-empty-state">У цій темі ще немає цитат</div>';
+        return;
+      }
+
+      quotesToRender.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'item-card quote-card is-expanded';
+        card.style.padding = '14px 16px';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.gap = '8px';
+
+        const themeBadge = query ? `<span style="font-size: 0.72rem; color: var(--c-primary); font-weight: 600; text-transform: uppercase;">Тема: ${escapeHtml(q.theme_name)}</span>` : '';
+
+        card.innerHTML = `
+          ${themeBadge}
+          <div style="font-size: 0.98rem; font-weight: 700; color: var(--c-primary-dark); line-height: 1.45; border-left: 3px solid var(--c-primary); padding-left: 10px;">
+            «${escapeHtml(q.name)}»
+          </div>
+          <div style="font-size: 0.88rem; color: var(--c-text-dark); line-height: 1.5; padding-left: 13px;">
+            ${escapeHtml(q.description || 'Пояснення відсутнє')}
+          </div>
+        `;
+        container.appendChild(card);
+      });
     }
 
     async function loadAllPersons() {
@@ -2702,6 +2886,7 @@
         <div class="scan-stat-chip">Тема: ${escapeHtml(data.topic)}</div>
         <div class="scan-stat-chip">📅 Дат: ${data.dates.length}</div>
         <div class="scan-stat-chip">📖 Термінів: ${data.terms.length}</div>
+        <div class="scan-stat-chip">💬 Цитат: ${(data.quotes || []).length}</div>
         <div class="scan-stat-chip">🖼️ Зображень: ${data.images.length}</div>
         <div class="scan-stat-chip">👤 Нових діячів: ${newPersons.length}</div>
       `;
@@ -2750,6 +2935,27 @@
         });
       } else {
         termsSection.style.display = 'none';
+      }
+
+      const quotesSection = document.getElementById('scanQuotesSection');
+      const quotesList = document.getElementById('scanQuotesList');
+      if (quotesList) quotesList.innerHTML = '';
+      if (data.quotes && data.quotes.length > 0) {
+        if (quotesSection) quotesSection.style.display = 'block';
+        data.quotes.forEach(q => {
+          const qName = q.name || q;
+          const row = document.createElement('div');
+          row.className = 'scan-item-row';
+          row.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+              <span class="scan-tag-key" title="${escapeHtml(qName)}">«${escapeHtml(qName)}»</span>
+              <input type="text" class="form-input scan-quote-input" data-key="${escapeHtml(qName)}" placeholder="Пояснення / контекст цитати..." />
+            </div>
+          `;
+          quotesList.appendChild(row);
+        });
+      } else {
+        if (quotesSection) quotesSection.style.display = 'none';
       }
 
       const imagesSection = document.getElementById('scanImagesSection');
@@ -2860,6 +3066,18 @@
         });
         formData.append('terms', JSON.stringify(termsPayload));
 
+        const quoteInputs = document.querySelectorAll('.scan-quote-input');
+        const quotesPayload = [];
+        quoteInputs.forEach(input => {
+          const key = input.getAttribute('data-key');
+          const val = input.value.trim();
+          quotesPayload.push({
+            name: key,
+            description: val
+          });
+        });
+        formData.append('quotes', JSON.stringify(quotesPayload));
+
         const imagesPayload = [];
         (data.images || []).forEach(img => {
           const docName = img.doc_name;
@@ -2948,6 +3166,7 @@
           });
         });
         await loadAllPersons();
+        await loadAllQuotes();
         parseConfig(appState.topicsMap);
       } catch (err) {
         console.error('Не вдалося завантажити дані:', err);
@@ -3084,6 +3303,7 @@
         appState.currentDates = themeData.dates || [];
         appState.currentTerms = themeData.terms || [];
         appState.currentImages = themeData.images || [];
+        appState.currentQuotes = themeData.quotes || [];
 
         renderSidePanel();
 
@@ -3719,10 +3939,13 @@
           } else {
             const addNoteOverlay = document.getElementById('addNoteModalOverlay');
             const personsOverlay = document.getElementById('personsModalOverlay');
+            const quotesOverlay = document.getElementById('quotesModalOverlay');
             if (addNoteOverlay && addNoteOverlay.classList.contains('is-visible')) {
               closeAddNoteModal();
             } else if (personsOverlay && personsOverlay.classList.contains('is-visible')) {
               closePersonsModal();
+            } else if (quotesOverlay && quotesOverlay.classList.contains('is-visible')) {
+              closeQuotesModal();
             }
           }
         }
