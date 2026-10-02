@@ -1607,7 +1607,7 @@
           <span>Конспект</span>
         </button>
 
-        <a href="/admin" class="toggle-nav-btn" aria-label="Адмін-панель" title="Адмін-панель" style="text-decoration: none;">
+        <a href="/admin" id="navAdminBtn" class="toggle-nav-btn" aria-label="Адмін-панель" title="Адмін-панель" style="text-decoration: none;">
           <span>⚙️</span>
           <span>Адмін</span>
         </a>
@@ -1685,6 +1685,12 @@
     </aside>
 
     <div class="note-container">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+        <button id="suggestNoteCorrectionBtn" class="toggle-nav-btn" type="button" style="font-size: 0.8rem; padding: 4px 10px;" title="Запропонувати правку до цього конспекту">
+          <span>✏️</span>
+          <span>Запропонувати правку</span>
+        </button>
+      </div>
       <div id="noteContent" class="markdown-body">
         <div class="state-message">
           <div class="spinner"></div>
@@ -1750,9 +1756,15 @@
         </div>
 
         <div class="person-detail-view" id="personDetailView" style="display: none;">
-          <button class="person-back-btn" id="personBackBtn">
-            <span>← Назад до списку</span>
-          </button>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+            <button class="person-back-btn" id="personBackBtn">
+              <span>← Назад до списку</span>
+            </button>
+            <button id="suggestPersonCorrectionBtn" class="toggle-nav-btn" type="button" style="font-size: 0.8rem; padding: 4px 10px;" title="Запропонувати правку до цього діяча">
+              <span>✏️</span>
+              <span>Запропонувати правку</span>
+            </button>
+          </div>
           <div class="person-detail-content">
             <div class="person-detail-photo-wrap" id="personDetailPhotoWrap">
               <img id="personDetailPhoto" src="" alt="" />
@@ -1819,27 +1831,27 @@
           </div>
 
           <div class="scan-section" id="scanDatesSection" style="display: none;">
-            <div class="scan-section-title">📅 Дати (з курсиву _..._):</div>
+            <div class="scan-section-title">📅 Дати:</div>
             <div id="scanDatesList"></div>
           </div>
 
           <div class="scan-section" id="scanTermsSection" style="display: none;">
-            <div class="scan-section-title">📖 Терміни (з жирного __...__):</div>
+            <div class="scan-section-title">📖 Терміни:</div>
             <div id="scanTermsList"></div>
           </div>
 
           <div class="scan-section" id="scanImagesSection" style="display: none;">
-            <div class="scan-section-title">🖼️ Зображення (Карти та Пам'ятки з !___...___, ___...___ або ![...](...)):</div>
+            <div class="scan-section-title">🖼️ Зображення (Карти та Пам'ятки):</div>
             <div class="scan-card-grid" id="scanImagesList"></div>
           </div>
 
           <div class="scan-section" id="scanPersonsSection" style="display: none;">
-            <div class="scan-section-title">👤 Видатні постаті (з `код`):</div>
+            <div class="scan-section-title">👤 Видатні постаті:</div>
             <div class="scan-card-grid" id="scanPersonsList"></div>
           </div>
 
           <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
-            <button class="primary-action-btn" id="saveAllFilesBtn" type="button">💾 Зберегти в чернетки</button>
+            <button class="primary-action-btn" id="saveAllFilesBtn" type="button">💾 Зберегти</button>
           </div>
 
           <div class="save-status-msg" id="saveStatusMsg" style="display: none;"></div>
@@ -1865,8 +1877,34 @@
     </div>
   </div>
 
+  <div class="persons-modal-overlay" id="suggestionModalOverlay" style="z-index: 500;">
+    <div class="persons-modal" id="suggestionModal" style="max-width: 520px;">
+      <div class="persons-modal-header">
+        <div class="persons-modal-title">
+          <span>✏️ Запропонувати правку</span>
+        </div>
+        <button class="persons-modal-close" id="closeSuggestionModalBtn" aria-label="Закрити">&times;</button>
+      </div>
+      <div class="persons-modal-body">
+        <input type="hidden" id="suggTargetType" />
+        <input type="hidden" id="suggTargetId" />
+        <input type="hidden" id="suggTargetName" />
+        <div style="font-weight: 600; margin-bottom: 12px; color: var(--c-primary-dark);" id="suggTargetLabel"></div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Ваше побажання або опис помилки:</label>
+          <textarea class="form-textarea" id="suggCommentInput" placeholder="Опишіть, що саме варто змінити чи додати..." style="min-height: 110px; width: 100%; border: 1px solid var(--c-border); border-radius: 6px; padding: 8px 12px; font-family: inherit; font-size: 0.9rem;"></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+          <button class="primary-action-btn" id="sendSuggestionBtn" type="button">Надіслати</button>
+        </div>
+        <div id="suggStatusMsg" style="margin-top: 10px; display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem;"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const ALLOW_ADDING_NOTES = true;
+    const ALLOW_ADMIN_PANEL = true;
 
     let projectDirHandle = null;
 
@@ -2230,6 +2268,7 @@
     }
 
     function showPersonDetail(person) {
+      appState.currentSelectedPerson = person;
       const gridView = document.getElementById('personsGridView');
       const detailView = document.getElementById('personDetailView');
       const photoWrap = document.getElementById('personDetailPhotoWrap');
@@ -2334,6 +2373,126 @@
       }
       if (saveBtn) {
         saveBtn.addEventListener('click', saveNewNoteAndFiles);
+      }
+
+      const navAdminBtn = document.getElementById('navAdminBtn');
+      if (!ALLOW_ADMIN_PANEL && navAdminBtn) {
+        navAdminBtn.style.display = 'none';
+      }
+    }
+
+    function openSuggestionModal(targetType, targetId, targetName) {
+      const typeInput = document.getElementById('suggTargetType');
+      const idInput = document.getElementById('suggTargetId');
+      const nameInput = document.getElementById('suggTargetName');
+      const commentInput = document.getElementById('suggCommentInput');
+      const label = document.getElementById('suggTargetLabel');
+      const statusMsg = document.getElementById('suggStatusMsg');
+
+      if (typeInput) typeInput.value = targetType;
+      if (idInput) idInput.value = targetId || '';
+      if (nameInput) nameInput.value = targetName || '';
+      if (commentInput) commentInput.value = '';
+      if (statusMsg) statusMsg.style.display = 'none';
+      if (label) {
+        label.textContent = targetType === 'theme' ? `Конспект теми: ${targetName}` : `Діяч: ${targetName}`;
+      }
+
+      const overlay = document.getElementById('suggestionModalOverlay');
+      if (overlay) overlay.classList.add('is-visible');
+    }
+
+    function closeSuggestionModal() {
+      const overlay = document.getElementById('suggestionModalOverlay');
+      if (overlay) overlay.classList.remove('is-visible');
+    }
+
+    function setupSuggestionModal() {
+      const closeBtn = document.getElementById('closeSuggestionModalBtn');
+      const overlay = document.getElementById('suggestionModalOverlay');
+      const sendBtn = document.getElementById('sendSuggestionBtn');
+      const suggestNoteBtn = document.getElementById('suggestNoteCorrectionBtn');
+      const suggestPersonBtn = document.getElementById('suggestPersonCorrectionBtn');
+
+      if (closeBtn) closeBtn.addEventListener('click', closeSuggestionModal);
+      if (overlay) {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) closeSuggestionModal();
+        });
+      }
+
+      if (suggestNoteBtn) {
+        suggestNoteBtn.addEventListener('click', () => {
+          if (!appState.currentThemeId) {
+            alert('Спочатку виберіть тему для перегляду конспекту');
+            return;
+          }
+          openSuggestionModal('theme', appState.currentThemeId, appState.currentTopic);
+        });
+      }
+
+      if (suggestPersonBtn) {
+        suggestPersonBtn.addEventListener('click', () => {
+          const p = appState.currentSelectedPerson;
+          if (!p) return;
+          openSuggestionModal('person', p.id, p.name);
+        });
+      }
+
+      if (sendBtn) {
+        sendBtn.addEventListener('click', async () => {
+          const targetType = document.getElementById('suggTargetType').value;
+          const targetId = document.getElementById('suggTargetId').value;
+          const targetName = document.getElementById('suggTargetName').value;
+          const comment = (document.getElementById('suggCommentInput').value || '').trim();
+          const statusMsg = document.getElementById('suggStatusMsg');
+
+          if (!comment) {
+            alert('Будь ласка, введіть текст побажання або помилки');
+            return;
+          }
+
+          sendBtn.disabled = true;
+          sendBtn.textContent = 'Надсилання...';
+
+          try {
+            const res = await fetch('/api/suggestions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                target_type: targetType,
+                target_id: Number(targetId) || 0,
+                target_name: targetName,
+                comment: comment
+              })
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || 'Помилка надсилання');
+
+            if (statusMsg) {
+              statusMsg.style.display = 'block';
+              statusMsg.style.background = '#e8f5e9';
+              statusMsg.style.color = '#2e7d32';
+              statusMsg.textContent = 'Дякуємо! Ваше побажання передано адміністратору.';
+            }
+
+            setTimeout(() => {
+              closeSuggestionModal();
+              sendBtn.disabled = false;
+              sendBtn.textContent = 'Надіслати';
+            }, 1200);
+
+          } catch (err) {
+            if (statusMsg) {
+              statusMsg.style.display = 'block';
+              statusMsg.style.background = '#ffebee';
+              statusMsg.style.color = '#c62828';
+              statusMsg.textContent = `Помилка: ${err.message}`;
+            }
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Надіслати';
+          }
+        });
       }
     }
 
@@ -3621,6 +3780,7 @@
       setupToggleNav();
       setupSidePanels();
       setupAddNoteModal();
+      setupSuggestionModal();
       setupDocModal();
       loadConfig();
     });

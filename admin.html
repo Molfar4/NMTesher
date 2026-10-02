@@ -119,9 +119,46 @@
     .admin-container {
       max-width: 1200px;
       width: 100%;
-      margin: 24px auto;
+      margin: 20px auto;
       padding: 0 20px;
       flex: 1;
+    }
+    .tab-nav-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--c-border);
+      padding-bottom: 10px;
+    }
+    .tab-nav-btn {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--c-text-dark);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .tab-nav-btn:hover {
+      background: var(--c-accent-peach);
+      border-color: var(--c-primary);
+    }
+    .tab-nav-btn.active {
+      background: var(--c-primary);
+      color: #FFFFFF;
+      border-color: var(--c-primary-dark);
+    }
+    .tab-nav-btn .tab-badge {
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.15);
+      color: inherit;
     }
     .alert-banner {
       padding: 12px 16px;
@@ -265,24 +302,6 @@
       resize: vertical;
       line-height: 1.5;
     }
-    .items-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    .items-table th {
-      text-align: left;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--c-primary-dark);
-      padding: 8px 10px;
-      border-bottom: 2px solid var(--c-border);
-    }
-    .items-table td {
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--c-border);
-      vertical-align: middle;
-    }
     .item-card-row {
       background: var(--c-surface);
       border: 1px solid var(--c-border);
@@ -340,17 +359,108 @@
       margin-top: 20px;
       box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     }
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(0, 0, 0, 0.1);
-      border-top-color: var(--c-primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .block-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .block-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--c-border);
+    }
+    .block-card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+    }
+    .themes-sublist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .theme-subitem {
+      background: #FFFFFF;
+      border: 1px solid var(--c-border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .suggestion-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .suggestion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .suggestion-text {
+      background: #FFFFFF;
+      border: 1px solid var(--c-border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      white-space: pre-wrap;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      padding: 20px;
+    }
+    .modal-overlay.is-visible {
+      display: flex;
+    }
+    .modal-dialog {
+      background: var(--c-surface-card);
+      border-radius: 10px;
+      border: 1px solid var(--c-border);
+      width: 100%;
+      max-width: 540px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      padding: 24px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--c-muted);
+    }
+    .modal-close:hover {
+      color: var(--c-text-dark);
     }
     @media (max-width: 768px) {
       .row-two-cols {
@@ -359,6 +469,9 @@
       .sticky-bottom-bar {
         flex-direction: column;
         gap: 10px;
+      }
+      .tab-nav-bar {
+        flex-wrap: wrap;
       }
     }
   </style>
@@ -379,12 +492,25 @@
   <div class="admin-container">
     <div id="alertBanner" class="alert-banner"></div>
 
-    <div id="draftsListView">
+    <div class="tab-nav-bar" id="mainTabBar">
+      <button class="tab-nav-btn active" id="tabDraftsBtn" type="button">
+        <span>📋 Чернетки</span>
+        <span class="tab-badge" id="draftsTabBadge">0</span>
+      </button>
+      <button class="tab-nav-btn" id="tabThemesBtn" type="button">
+        <span>📚 Існуючі теми та блоки</span>
+      </button>
+      <button class="tab-nav-btn" id="tabSuggestionsBtn" type="button">
+        <span>💬 Пропозиції правок</span>
+        <span class="tab-badge" id="suggestionsTabBadge">0</span>
+      </button>
+    </div>
+
+    <div id="tabDraftsView">
       <div class="section-card">
         <div class="section-header-row">
           <div class="section-title">
             <span>📋 Чернетки конспектів</span>
-            <span id="draftsCountBadge" class="stat-chip">0</span>
           </div>
           <button id="refreshDraftsBtn" class="btn" type="button">🔄 Оновити</button>
         </div>
@@ -394,17 +520,49 @@
       </div>
     </div>
 
+    <div id="tabThemesView" style="display: none;">
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
+            <span>📚 Блоки та теми</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="createBlockBtn" class="btn btn-primary" type="button">+ Новий блок</button>
+            <button id="refreshThemesBtn" class="btn" type="button">🔄 Оновити</button>
+          </div>
+        </div>
+        <div id="themesListContainer">
+          <div class="empty-state">Завантаження списку тем...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabSuggestionsView" style="display: none;">
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
+            <span>💬 Побажання та правки від користувачів</span>
+          </div>
+          <button id="refreshSuggestionsBtn" class="btn" type="button">🔄 Оновити</button>
+        </div>
+        <div id="suggestionsListContainer">
+          <div class="empty-state">Завантаження пропозицій...</div>
+        </div>
+      </div>
+    </div>
+
     <div id="draftEditorView" style="display: none;">
-      <div style="margin-bottom: 16px;">
-        <button id="backToListBtn" class="btn" type="button">← Повернутися до списку чернеток</button>
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <button id="backToListBtn" class="btn" type="button">← Повернутися до списку</button>
+        <button id="reparseMarkdownBtn" class="btn btn-primary" type="button" title="Пересканувати текст конспекту з оновленням сутностей">🔄 Перепарсити текст</button>
       </div>
 
       <div class="section-card">
         <div class="section-header-row">
           <div class="section-title">
-            <span>✏️ Редагування конспекту</span>
+            <span id="editorTitleText">✏️ Редагування конспекту</span>
           </div>
-          <div id="currentDraftIdBadge" class="stat-chip">Чернетка #</div>
+          <div id="currentDraftIdBadge" class="stat-chip">Редагування</div>
         </div>
 
         <div class="row-two-cols">
@@ -466,7 +624,7 @@
 
       <div class="sticky-bottom-bar">
         <div>
-          <button id="deleteDraftFromEditorBtn" class="btn btn-danger" type="button">🗑️ Видалити чернетку</button>
+          <button id="deleteDraftFromEditorBtn" class="btn btn-danger" type="button">🗑️ Видалити</button>
         </div>
         <div style="display: flex; gap: 10px;">
           <button id="saveDraftBtn" class="btn btn-primary" type="button">💾 Зберегти зміни</button>
@@ -476,9 +634,40 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="personEditModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 style="color: var(--c-primary-dark); font-size: 1.15rem;">👤 Редагування діяча</h3>
+        <button class="modal-close" id="closePersonModalBtn" type="button">&times;</button>
+      </div>
+      <input type="hidden" id="editPersonId" />
+      <div class="form-group">
+        <label class="form-label">Ім'я діяча:</label>
+        <input type="text" id="modalPersonName" class="form-input" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Біографія:</label>
+        <textarea id="modalPersonBio" class="form-textarea" style="min-height: 100px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Портрет діяча:</label>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+          <img id="modalPersonImgPreview" class="preview-thumb" src="" alt="Портрет" style="display: none;" />
+          <input type="file" id="modalPersonPhoto" class="form-input" accept="image/*" />
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button id="cancelPersonModalBtn" class="btn" type="button">Скасувати</button>
+        <button id="savePersonModalBtn" class="btn btn-primary" type="button">💾 Зберегти зміни</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let activeDraft = null;
+    let activeThemeId = null;
     let draftsData = [];
+    let currentTab = 'drafts';
 
     function showAlert(message, isError = false) {
       const banner = document.getElementById('alertBanner');
@@ -491,9 +680,26 @@
       }, 5000);
     }
 
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('draftEditorView').style.display = 'none';
+
+      document.getElementById('tabDraftsBtn').classList.toggle('active', tab === 'drafts');
+      document.getElementById('tabThemesBtn').classList.toggle('active', tab === 'themes');
+      document.getElementById('tabSuggestionsBtn').classList.toggle('active', tab === 'suggestions');
+
+      document.getElementById('tabDraftsView').style.display = tab === 'drafts' ? 'block' : 'none';
+      document.getElementById('tabThemesView').style.display = tab === 'themes' ? 'block' : 'none';
+      document.getElementById('tabSuggestionsView').style.display = tab === 'suggestions' ? 'block' : 'none';
+
+      if (tab === 'drafts') loadDrafts();
+      if (tab === 'themes') loadThemesList();
+      if (tab === 'suggestions') loadSuggestions();
+    }
+
     async function loadDrafts() {
       const container = document.getElementById('draftsContainer');
-      const badge = document.getElementById('draftsCountBadge');
+      const badge = document.getElementById('draftsTabBadge');
       container.innerHTML = '<div class="empty-state">Завантаження...</div>';
 
       try {
@@ -547,23 +753,323 @@
       }
     }
 
+    async function loadThemesList() {
+      const container = document.getElementById('themesListContainer');
+      container.innerHTML = '<div class="empty-state">Завантаження...</div>';
+
+      try {
+        const res = await fetch('/api/admin/themes');
+        if (!res.ok) throw new Error('Помилка завантаження тем');
+        const blocks = await res.json();
+
+        if (blocks.length === 0) {
+          container.innerHTML = '<div class="empty-state">У базі даних немає жодного блоку.</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        blocks.forEach(b => {
+          const card = document.createElement('div');
+          card.className = 'block-card';
+
+          let themesHtml = '';
+          if (b.themes && b.themes.length > 0) {
+            themesHtml = b.themes.map(t => `
+              <div class="theme-subitem">
+                <span style="font-weight: 600; font-size: 0.95rem;">📖 ${escapeHtml(t.name)}</span>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-primary edit-theme-btn" data-id="${t.id}" type="button">✏️ Редагувати</button>
+                  <button class="btn rename-theme-btn" data-id="${t.id}" data-name="${escapeHtml(t.name)}" type="button">🏷️</button>
+                  <button class="btn btn-danger delete-theme-btn" data-id="${t.id}" data-name="${escapeHtml(t.name)}" type="button">🗑️</button>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            themesHtml = '<div style="color: var(--c-muted); font-size: 0.85rem; padding: 6px 0;">У цьому блоці ще немає тем.</div>';
+          }
+
+          card.innerHTML = `
+            <div class="block-card-header">
+              <span class="block-card-title">📁 ${escapeHtml(b.name)}</span>
+              <button class="btn rename-block-btn" data-id="${b.id}" data-name="${escapeHtml(b.name)}" type="button">✏️ Перейменувати блок</button>
+            </div>
+            <div class="themes-sublist">
+              ${themesHtml}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+        container.querySelectorAll('.edit-theme-btn').forEach(btn => {
+          btn.addEventListener('click', () => openThemeEditor(Number(btn.dataset.id)));
+        });
+        container.querySelectorAll('.rename-theme-btn').forEach(btn => {
+          btn.addEventListener('click', () => promptRenameTheme(Number(btn.dataset.id), btn.dataset.name));
+        });
+        container.querySelectorAll('.delete-theme-btn').forEach(btn => {
+          btn.addEventListener('click', () => confirmDeleteTheme(Number(btn.dataset.id), btn.dataset.name));
+        });
+        container.querySelectorAll('.rename-block-btn').forEach(btn => {
+          btn.addEventListener('click', () => promptRenameBlock(Number(btn.dataset.id), btn.dataset.name));
+        });
+
+      } catch (err) {
+        container.innerHTML = `<div class="empty-state" style="color: var(--c-accent-red);">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    async function loadSuggestions() {
+      const container = document.getElementById('suggestionsListContainer');
+      const badge = document.getElementById('suggestionsTabBadge');
+      container.innerHTML = '<div class="empty-state">Завантаження...</div>';
+
+      try {
+        const res = await fetch('/api/admin/suggestions');
+        if (!res.ok) throw new Error('Помилка завантаження пропозицій');
+        const suggestions = await res.json();
+        badge.textContent = suggestions.length;
+
+        if (suggestions.length === 0) {
+          container.innerHTML = '<div class="empty-state">Немає нових побажань чи правок від користувачів.</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        suggestions.forEach(s => {
+          const card = document.createElement('div');
+          card.className = 'suggestion-card';
+          const isTheme = s.target_type === 'theme';
+          card.innerHTML = `
+            <div class="suggestion-header">
+              <span class="stat-chip" style="font-weight: 700; color: var(--c-primary-dark);">
+                ${isTheme ? '📖 Тема: ' : '👤 Діяч: '}${escapeHtml(s.target_name)}
+              </span>
+              <span style="font-size: 0.78rem; color: var(--c-muted);">${escapeHtml(s.created_at || '')}</span>
+            </div>
+            <div class="suggestion-text">${escapeHtml(s.comment)}</div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 4px;">
+              ${isTheme 
+                ? `<button class="btn btn-primary jump-to-theme-btn" data-id="${s.target_id}" type="button">✏️ Перейти до конспекту</button>`
+                : `<button class="btn btn-primary edit-person-from-sugg-btn" data-id="${s.target_id}" type="button">👤 Редагувати діяча</button>`
+              }
+              <button class="btn btn-success resolve-sugg-btn" data-id="${s.id}" type="button">✔️ Виконано</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+        container.querySelectorAll('.jump-to-theme-btn').forEach(btn => {
+          btn.addEventListener('click', () => openThemeEditor(Number(btn.dataset.id)));
+        });
+        container.querySelectorAll('.edit-person-from-sugg-btn').forEach(btn => {
+          btn.addEventListener('click', () => openPersonModal(Number(btn.dataset.id)));
+        });
+        container.querySelectorAll('.resolve-sugg-btn').forEach(btn => {
+          btn.addEventListener('click', () => resolveSuggestion(Number(btn.dataset.id)));
+        });
+
+      } catch (err) {
+        container.innerHTML = `<div class="empty-state" style="color: var(--c-accent-red);">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    async function promptRenameBlock(blockId, oldName) {
+      const newName = prompt('Введіть нову назву блоку:', oldName);
+      if (!newName || newName.trim() === oldName) return;
+
+      try {
+        const res = await fetch(`/api/admin/blocks/${blockId}/rename`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ block_name: newName.trim() })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка перейменування');
+        showAlert('Блок успішно перейменовано');
+        loadThemesList();
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    async function promptRenameTheme(themeId, oldName) {
+      const newName = prompt('Введіть нову назву теми:', oldName);
+      if (!newName || newName.trim() === oldName) return;
+
+      try {
+        const res = await fetch(`/api/admin/themes/${themeId}/rename`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme_name: newName.trim() })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка перейменування');
+        showAlert('Тему успішно перейменовано');
+        loadThemesList();
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    async function confirmDeleteTheme(themeId, name) {
+      if (!confirm(`Ви дійсно бажаєте видалити тему "${name}" зі всіма збереженими датами, термінами, картинками та файлами конспекту?`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/themes/${themeId}`, {
+          method: 'DELETE'
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка видалення');
+        showAlert('Тему успішно видалено');
+        if (activeThemeId === themeId) {
+          closeDraftEditor();
+        } else {
+          loadThemesList();
+        }
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    async function resolveSuggestion(suggId) {
+      try {
+        const res = await fetch(`/api/admin/suggestions/${suggId}/resolve`, {
+          method: 'POST'
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка оновлення');
+        showAlert('Позначено як виконане');
+        loadSuggestions();
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    async function openPersonModal(personId) {
+      try {
+        const res = await fetch(`/api/admin/persons/${personId}`);
+        if (!res.ok) throw new Error('Не вдалося завантажити діяча');
+        const p = await res.json();
+
+        document.getElementById('editPersonId').value = p.id;
+        document.getElementById('modalPersonName').value = p.name || '';
+        document.getElementById('modalPersonBio').value = p.bio || '';
+
+        const imgPreview = document.getElementById('modalPersonImgPreview');
+        if (p.imageUrl) {
+          imgPreview.src = p.imageUrl;
+          imgPreview.style.display = 'block';
+        } else {
+          imgPreview.style.display = 'none';
+        }
+
+        document.getElementById('modalPersonPhoto').value = '';
+        document.getElementById('personEditModal').classList.add('is-visible');
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    function closePersonModal() {
+      document.getElementById('personEditModal').classList.remove('is-visible');
+    }
+
+    async function savePersonModal() {
+      const pId = document.getElementById('editPersonId').value;
+      const name = document.getElementById('modalPersonName').value.trim();
+      const bio = document.getElementById('modalPersonBio').value.trim();
+      const fileInput = document.getElementById('modalPersonPhoto');
+
+      if (!name) {
+        alert('Ім’я діяча обов’язкове');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('bio', bio);
+      if (fileInput.files.length > 0) {
+        formData.append('photo', fileInput.files[0]);
+      }
+
+      try {
+        const res = await fetch(`/api/admin/persons/${pId}/update`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка збереження');
+        showAlert('Дані діяча успішно оновлено');
+        closePersonModal();
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
     async function openDraftEditor(draftId) {
+      activeThemeId = null;
       try {
         const res = await fetch(`/api/admin/drafts/${draftId}`);
         if (!res.ok) throw new Error('Не вдалося отримати чернетку');
         activeDraft = await res.json();
 
+        document.getElementById('editorTitleText').textContent = '✏️ Редагування чернетки';
         document.getElementById('currentDraftIdBadge').textContent = `Чернетка #${activeDraft.id}`;
         document.getElementById('editBlockName').value = activeDraft.block_name || '';
         document.getElementById('editThemeName').value = activeDraft.theme_name || '';
         document.getElementById('editMarkdown').value = activeDraft.raw_markdown || '';
+
+        document.getElementById('publishDraftBtn').style.display = 'inline-flex';
+        document.getElementById('saveDraftBtn').textContent = '💾 Зберегти зміни';
+        document.getElementById('deleteDraftFromEditorBtn').textContent = '🗑️ Видалити чернетку';
 
         renderDatesEditor(activeDraft.dates || []);
         renderTermsEditor(activeDraft.terms || []);
         renderImagesEditor(activeDraft.images || []);
         renderPersonsEditor(activeDraft.persons || []);
 
-        document.getElementById('draftsListView').style.display = 'none';
+        document.getElementById('mainTabBar').style.display = 'none';
+        document.getElementById('tabDraftsView').style.display = 'none';
+        document.getElementById('tabThemesView').style.display = 'none';
+        document.getElementById('tabSuggestionsView').style.display = 'none';
+        document.getElementById('draftEditorView').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    async function openThemeEditor(themeId) {
+      activeDraft = null;
+      activeThemeId = themeId;
+      try {
+        const res = await fetch(`/api/admin/themes/${themeId}`);
+        if (!res.ok) throw new Error('Не вдалося завантажити конспект теми');
+        const themeData = await res.json();
+        activeDraft = themeData;
+
+        document.getElementById('editorTitleText').textContent = '📖 Редагування конспекту теми';
+        document.getElementById('currentDraftIdBadge').textContent = `Тема #${themeData.id}`;
+        document.getElementById('editBlockName').value = themeData.block_name || '';
+        document.getElementById('editThemeName').value = themeData.theme_name || '';
+        document.getElementById('editMarkdown').value = themeData.raw_markdown || '';
+
+        document.getElementById('publishDraftBtn').style.display = 'none';
+        document.getElementById('saveDraftBtn').textContent = '💾 Зберегти зміни в конспект';
+        document.getElementById('deleteDraftFromEditorBtn').textContent = '🗑️ Видалити тему';
+
+        renderDatesEditor(themeData.dates || []);
+        renderTermsEditor(themeData.terms || []);
+        renderImagesEditor(themeData.images || []);
+        renderPersonsEditor(themeData.persons || []);
+
+        document.getElementById('mainTabBar').style.display = 'none';
+        document.getElementById('tabDraftsView').style.display = 'none';
+        document.getElementById('tabThemesView').style.display = 'none';
+        document.getElementById('tabSuggestionsView').style.display = 'none';
         document.getElementById('draftEditorView').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -574,9 +1080,53 @@
 
     function closeDraftEditor() {
       activeDraft = null;
+      activeThemeId = null;
       document.getElementById('draftEditorView').style.display = 'none';
-      document.getElementById('draftsListView').style.display = 'block';
-      loadDrafts();
+      document.getElementById('mainTabBar').style.display = 'flex';
+      switchTab(currentTab);
+    }
+
+    async function reparseEditorMarkdown() {
+      if (!activeDraft) return;
+      collectCurrentEditorData();
+
+      const btn = document.getElementById('reparseMarkdownBtn');
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Сканування...';
+
+      try {
+        const res = await fetch('/api/admin/reparse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            markdown: activeDraft.raw_markdown || '',
+            current_dates: activeDraft.dates || [],
+            current_terms: activeDraft.terms || [],
+            current_images: activeDraft.images || [],
+            current_persons: activeDraft.persons || []
+          })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка перепарсингу');
+
+        activeDraft.dates = result.dates;
+        activeDraft.terms = result.terms;
+        activeDraft.images = result.images;
+        activeDraft.persons = result.persons;
+
+        renderDatesEditor(activeDraft.dates);
+        renderTermsEditor(activeDraft.terms);
+        renderImagesEditor(activeDraft.images);
+        renderPersonsEditor(activeDraft.persons);
+
+        showAlert('Текст успішно перепарсено! Усі існуючі дані збережено.');
+      } catch (err) {
+        showAlert(err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origText;
+      }
     }
 
     function renderDatesEditor(dates) {
@@ -668,7 +1218,7 @@
         const row = document.createElement('div');
         row.className = 'item-card-row';
         const isMonuments = img.type === 1 || img.type === '1' || img.type === 'monuments';
-        const previewUrl = img.file_path ? `/${img.file_path}` : '';
+        const previewUrl = img.url ? img.url : (img.file_path ? `/${img.file_path}` : '');
         row.innerHTML = `
           <div class="row-two-cols">
             <div>
@@ -728,7 +1278,7 @@
       persons.forEach((p, idx) => {
         const row = document.createElement('div');
         row.className = 'item-card-row';
-        const previewUrl = p.photo_path ? `/${p.photo_path}` : '';
+        const previewUrl = p.imageUrl ? p.imageUrl : (p.photo_path ? `/${p.photo_path}` : '');
         row.innerHTML = `
           <div>
             <label class="form-label">Ім'я діяча:</label>
@@ -797,11 +1347,13 @@
       imgDocs.forEach((input, i) => {
         const old = (activeDraft.images && activeDraft.images[i]) ? activeDraft.images[i] : {};
         newImages.push({
+          id: old.id || null,
           doc_name: input.value.trim(),
           name: imgNames[i] ? imgNames[i].value.trim() : input.value.trim(),
           type: imgTypes[i] ? Number(imgTypes[i].value) : 0,
           show_in_note: imgShows[i] ? imgShows[i].checked : true,
-          file_path: old.file_path || ''
+          file_path: old.file_path || '',
+          url: old.url || ''
         });
       });
       activeDraft.images = newImages;
@@ -814,13 +1366,14 @@
         newPersons.push({
           name: input.value.trim(),
           bio: personBios[i] ? personBios[i].value.trim() : '',
-          photo_path: old.photo_path || ''
+          photo_path: old.photo_path || '',
+          imageUrl: old.imageUrl || ''
         });
       });
       activeDraft.persons = newPersons;
     }
 
-    async function saveDraftChanges() {
+    async function saveCurrentEditorChanges() {
       if (!activeDraft) return;
       collectCurrentEditorData();
 
@@ -854,15 +1407,21 @@
       saveBtn.disabled = true;
       saveBtn.textContent = 'Збереження...';
 
+      const url = activeThemeId ? `/api/admin/themes/${activeThemeId}/update` : `/api/admin/drafts/${activeDraft.id}/update`;
+
       try {
-        const res = await fetch(`/api/admin/drafts/${activeDraft.id}/update`, {
+        const res = await fetch(url, {
           method: 'POST',
           body: formData
         });
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Помилка збереження');
-        showAlert('Зміни успішно збережено в чернетку!');
-        await openDraftEditor(activeDraft.id);
+        showAlert(activeThemeId ? 'Конспект успішно збережено!' : 'Зміни успішно збережено в чернетку!');
+        if (activeThemeId) {
+          await openThemeEditor(activeThemeId);
+        } else {
+          await openDraftEditor(activeDraft.id);
+        }
       } catch (err) {
         showAlert(err.message, true);
       } finally {
@@ -872,12 +1431,12 @@
     }
 
     async function publishDraft() {
-      if (!activeDraft) return;
+      if (!activeDraft || activeThemeId) return;
       if (!confirm(`Опублікувати тему "${activeDraft.theme_name}" у блоці "${activeDraft.block_name}"? Дані буде записано в базу та файли.`)) {
         return;
       }
 
-      await saveDraftChanges();
+      await saveCurrentEditorChanges();
 
       const publishBtn = document.getElementById('publishDraftBtn');
       const originalText = publishBtn.textContent;
@@ -944,13 +1503,47 @@
         .replace(/'/g, '&#039;');
     }
 
+    document.getElementById('tabDraftsBtn').addEventListener('click', () => switchTab('drafts'));
+    document.getElementById('tabThemesBtn').addEventListener('click', () => switchTab('themes'));
+    document.getElementById('tabSuggestionsBtn').addEventListener('click', () => switchTab('suggestions'));
+
     document.getElementById('refreshDraftsBtn').addEventListener('click', loadDrafts);
+    document.getElementById('refreshThemesBtn').addEventListener('click', loadThemesList);
+    document.getElementById('refreshSuggestionsBtn').addEventListener('click', loadSuggestions);
+
     document.getElementById('backToListBtn').addEventListener('click', closeDraftEditor);
-    document.getElementById('saveDraftBtn').addEventListener('click', saveDraftChanges);
+    document.getElementById('reparseMarkdownBtn').addEventListener('click', reparseEditorMarkdown);
+    document.getElementById('saveDraftBtn').addEventListener('click', saveCurrentEditorChanges);
     document.getElementById('publishDraftBtn').addEventListener('click', publishDraft);
     document.getElementById('deleteDraftFromEditorBtn').addEventListener('click', () => {
-      if (activeDraft) deleteDraft(activeDraft.id);
+      if (activeThemeId) {
+        confirmDeleteTheme(activeThemeId, activeDraft ? activeDraft.theme_name : '');
+      } else if (activeDraft) {
+        deleteDraft(activeDraft.id);
+      }
     });
+
+    document.getElementById('createBlockBtn').addEventListener('click', async () => {
+      const blockName = prompt('Введіть назву нового блоку:');
+      if (!blockName || !blockName.trim()) return;
+      try {
+        const res = await fetch('/api/admin/blocks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ block_name: blockName.trim() })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка створення блоку');
+        showAlert('Блок успішно створено');
+        loadThemesList();
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    });
+
+    document.getElementById('closePersonModalBtn').addEventListener('click', closePersonModal);
+    document.getElementById('cancelPersonModalBtn').addEventListener('click', closePersonModal);
+    document.getElementById('savePersonModalBtn').addEventListener('click', savePersonModal);
 
     document.getElementById('addDateBtn').addEventListener('click', () => {
       collectCurrentEditorData();
@@ -969,18 +1562,19 @@
     document.getElementById('addImageBtn').addEventListener('click', () => {
       collectCurrentEditorData();
       if (!activeDraft.images) activeDraft.images = [];
-      activeDraft.images.push({ doc_name: '', name: '', type: 0, show_in_note: true, file_path: '' });
+      activeDraft.images.push({ doc_name: '', name: '', type: 0, show_in_note: true, file_path: '', url: '' });
       renderImagesEditor(activeDraft.images);
     });
 
     document.getElementById('addPersonBtn').addEventListener('click', () => {
       collectCurrentEditorData();
       if (!activeDraft.persons) activeDraft.persons = [];
-      activeDraft.persons.push({ name: '', bio: '', photo_path: '' });
+      activeDraft.persons.push({ name: '', bio: '', photo_path: '', imageUrl: '' });
       renderPersonsEditor(activeDraft.persons);
     });
 
     loadDrafts();
+    loadSuggestions();
   </script>
 </body>
 </html>

@@ -12,6 +12,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'nmtesher-secret-key-12345')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'Database.db')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin')
+ALLOW_ADMIN = os.environ.get('ALLOW_ADMIN', 'true').lower() in ('true', '1')
 
 ADMIN_LOGIN_HTML = """<!DOCTYPE html>
 <html lang="uk">
@@ -165,6 +166,17 @@ def init_db():
             data_json TEXT NOT NULL
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS Suggestions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            target_type TEXT NOT NULL,
+            target_id INTEGER NOT NULL,
+            target_name TEXT NOT NULL,
+            comment TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            status TEXT DEFAULT 'pending'
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -173,6 +185,8 @@ init_db()
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        if not ALLOW_ADMIN:
+            abort(404)
         if not session.get('is_admin'):
             if request.path.startswith('/api/'):
                 return jsonify({'error': 'Unauthorized'}), 401
@@ -198,18 +212,65 @@ def find_person_image_file(block_id, person_id):
                 return f"/PersonImages/{fname}"
     return None
 
+def scan_markdown_tokens(markdown):
+    images = {}
+    for m in re.finditer(r'!___([^\r\n]+?)___', markdown):
+        n = m.group(1).strip()
+        if n and n.lower() not in images:
+            images[n.lower()] = {'doc_name': n, 'name': n, 'type': 0, 'show_in_note': True}
+
+    c1 = re.sub(r'!___[^\r\n]+?___', ' ', markdown)
+    for m in re.finditer(r'___([^\r\n]+?)___', c1):
+        n = m.group(1).strip()
+        if n and n.lower() not in images:
+            images[n.lower()] = {'doc_name': n, 'name': n, 'type': 0, 'show_in_note': False}
+
+    c2 = re.sub(r'!___[^\r\n]+?___', ' ', markdown)
+    c2 = re.sub(r'___[^\r\n]+?___', ' ', c2)
+    raw_persons = []
+    for m in re.finditer(r'`([^`\r\n]+)`', c2):
+        p = m.group(1).strip()
+        if p and p not in raw_persons:
+            raw_persons.append(p)
+
+    c3 = re.sub(r'`[^`\r\n]+`', ' ', c2)
+    terms = []
+    for m in re.finditer(r'(?<!_)__([^_ \r\n][^_\r\n]*?)__(?!_)', c3):
+        t = m.group(1).strip()
+        if t and t not in terms:
+            terms.append(t)
+
+    c4 = re.sub(r'(?<!_)__[^_\r\n]+?__(?!_)', ' ', c3)
+    dates = []
+    for m in re.finditer(r'(?<!_)_([^_ \r\n][^_\r\n]*?)_(?!_)', c4):
+        d = m.group(1).strip()
+        if d and d not in dates:
+            dates.append(d)
+
+    return dates, terms, images, raw_persons
+
 @app.route('/')
 def index():
     return send_from_directory(BASE_DIR, 'index.html')
 
+@app.route('/api/config')
+def get_config():
+    return jsonify({
+        'allow_admin': ALLOW_ADMIN
+    })
+
 @app.route('/admin')
 def admin_page():
+    if not ALLOW_ADMIN:
+        abort(404)
     if not session.get('is_admin'):
         return redirect('/admin/login')
     return send_from_directory(BASE_DIR, 'admin.html')
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
+    if not ALLOW_ADMIN:
+        abort(404)
     if session.get('is_admin'):
         return redirect('/admin')
     error = None
@@ -409,39 +470,7 @@ def scan_note():
             conn.close()
             return jsonify({'error': f'Тема "{theme_name}" вже існує в блоці "{block["Block_Name"]}"'}), 400
 
-    images = {}
-    for m in re.finditer(r'!___([^\r\n]+?)___', markdown):
-        n = m.group(1).strip()
-        if n and n.lower() not in images:
-            images[n.lower()] = {'doc_name': n, 'name': n, 'type': 0, 'show_in_note': True}
-
-    c1 = re.sub(r'!___[^\r\n]+?___', ' ', markdown)
-    for m in re.finditer(r'___([^\r\n]+?)___', c1):
-        n = m.group(1).strip()
-        if n and n.lower() not in images:
-            images[n.lower()] = {'doc_name': n, 'name': n, 'type': 0, 'show_in_note': False}
-
-    c2 = re.sub(r'!___[^\r\n]+?___', ' ', markdown)
-    c2 = re.sub(r'___[^\r\n]+?___', ' ', c2)
-    raw_persons = []
-    for m in re.finditer(r'`([^`\r\n]+)`', c2):
-        p = m.group(1).strip()
-        if p and p not in raw_persons:
-            raw_persons.append(p)
-
-    c3 = re.sub(r'`[^`\r\n]+`', ' ', c2)
-    terms = []
-    for m in re.finditer(r'(?<!_)__([^_ \r\n][^_\r\n]*?)__(?!_)', c3):
-        t = m.group(1).strip()
-        if t and t not in terms:
-            terms.append(t)
-
-    c4 = re.sub(r'(?<!_)__[^_\r\n]+?__(?!_)', ' ', c3)
-    dates = []
-    for m in re.finditer(r'(?<!_)_([^_ \r\n][^_\r\n]*?)_(?!_)', c4):
-        d = m.group(1).strip()
-        if d and d not in dates:
-            dates.append(d)
+    dates, terms, images, raw_persons = scan_markdown_tokens(markdown)
 
     existing_persons_in_block = set()
     if block:
@@ -544,6 +573,27 @@ def create_draft():
     conn.close()
 
     return jsonify({'status': 'ok', 'draft_id': draft_id, 'message': 'Конспект успішно збережено в чернетки'})
+
+@app.route('/api/suggestions', methods=['POST'])
+def create_suggestion():
+    data = request.get_json(silent=True) or {}
+    target_type = data.get('target_type', 'theme')
+    target_id = data.get('target_id', 0)
+    target_name = data.get('target_name', '').strip()
+    comment = data.get('comment', '').strip()
+
+    if not comment:
+        return jsonify({'error': 'Текст побажання або правки не може бути порожнім'}), 400
+
+    conn = get_db_connection()
+    conn.execute(
+        'INSERT INTO Suggestions (target_type, target_id, target_name, comment) VALUES (?, ?, ?, ?)',
+        (target_type, target_id, target_name, comment)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'ok', 'message': 'Ваше побажання успішно надіслано'})
 
 @app.route('/api/admin/drafts')
 @login_required
@@ -797,6 +847,541 @@ def publish_admin_draft(draft_id):
         shutil.rmtree(draft_folder, ignore_errors=True)
 
     return jsonify({'status': 'ok', 'block_id': block_id, 'theme_id': theme_id})
+
+@app.route('/api/admin/themes')
+@login_required
+def get_admin_themes():
+    conn = get_db_connection()
+    blocks_rows = conn.execute('SELECT Block_Id, Block_Name FROM Blocks ORDER BY Block_Id').fetchall()
+    themes_rows = conn.execute('SELECT Theme_Id, theme_name, block_id FROM Themes ORDER BY Theme_Id').fetchall()
+    conn.close()
+
+    themes_by_block = {}
+    for t in themes_rows:
+        themes_by_block.setdefault(t['block_id'], []).append({
+            'id': t['Theme_Id'],
+            'name': t['theme_name'],
+            'block_id': t['block_id']
+        })
+
+    result = []
+    for b in blocks_rows:
+        result.append({
+            'id': b['Block_Id'],
+            'name': b['Block_Name'],
+            'themes': themes_by_block.get(b['Block_Id'], [])
+        })
+
+    return jsonify(result)
+
+@app.route('/api/admin/blocks', methods=['POST'])
+@login_required
+def create_admin_block():
+    data = request.get_json(silent=True) or {}
+    block_name = data.get('block_name', '').strip()
+    if not block_name:
+        return jsonify({'error': 'Назва блоку не може бути порожньою'}), 400
+
+    conn = get_db_connection()
+    existing = conn.execute('SELECT Block_Id FROM Blocks WHERE LOWER(Block_Name) = LOWER(?)', (block_name,)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({'error': 'Блок з такою назвою вже існує'}), 400
+
+    cur = conn.cursor()
+    cur.execute('INSERT INTO Blocks (Block_Name) VALUES (?)', (block_name,))
+    block_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'ok', 'block_id': block_id, 'block_name': block_name})
+
+@app.route('/api/admin/blocks/<int:block_id>/rename', methods=['POST'])
+@login_required
+def rename_admin_block(block_id):
+    data = request.get_json(silent=True) or {}
+    new_name = data.get('block_name', '').strip()
+    if not new_name:
+        return jsonify({'error': 'Назва блоку не може бути порожньою'}), 400
+
+    conn = get_db_connection()
+    existing = conn.execute('SELECT Block_Id FROM Blocks WHERE LOWER(Block_Name) = LOWER(?) AND Block_Id != ?', (new_name, block_id)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({'error': 'Блок з такою назвою вже існує'}), 400
+
+    conn.execute('UPDATE Blocks SET Block_Name = ? WHERE Block_Id = ?', (new_name, block_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'ok', 'block_id': block_id, 'block_name': new_name})
+
+@app.route('/api/admin/themes/<int:theme_id>/rename', methods=['POST'])
+@login_required
+def rename_admin_theme(theme_id):
+    data = request.get_json(silent=True) or {}
+    new_name = data.get('theme_name', '').strip()
+    if not new_name:
+        return jsonify({'error': 'Назва теми не може бути порожньою'}), 400
+
+    conn = get_db_connection()
+    theme = conn.execute('SELECT Theme_Id, block_id FROM Themes WHERE Theme_Id = ?', (theme_id,)).fetchone()
+    if not theme:
+        conn.close()
+        abort(404, description='Тему не знайдено')
+
+    existing = conn.execute('SELECT Theme_Id FROM Themes WHERE block_id = ? AND LOWER(theme_name) = LOWER(?) AND Theme_Id != ?', (theme['block_id'], new_name, theme_id)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify({'error': 'Тема з такою назвою вже існує в цьому блоці'}), 400
+
+    conn.execute('UPDATE Themes SET theme_name = ? WHERE Theme_Id = ?', (new_name, theme_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'ok', 'theme_id': theme_id, 'theme_name': new_name})
+
+@app.route('/api/admin/themes/<int:theme_id>', methods=['GET'])
+@login_required
+def get_admin_theme_for_edit(theme_id):
+    conn = get_db_connection()
+    theme = conn.execute(
+        'SELECT t.Theme_Id, t.theme_name, t.block_id, b.Block_Name '
+        'FROM Themes t '
+        'JOIN Blocks b ON t.block_id = b.Block_Id '
+        'WHERE t.Theme_Id = ?',
+        (theme_id,)
+    ).fetchone()
+
+    if not theme:
+        conn.close()
+        abort(404, description='Тему не знайдено')
+
+    dates_rows = conn.execute(
+        'SELECT Date_Id, Date_name, Date_description, Is_Mandority '
+        'FROM Dates WHERE theme_id = ? ORDER BY Date_Id',
+        (theme_id,)
+    ).fetchall()
+
+    terms_rows = conn.execute(
+        'SELECT Term_Id, Term_name, Term_description '
+        'FROM Terms WHERE theme_id = ? ORDER BY Term_Id',
+        (theme_id,)
+    ).fetchall()
+
+    images_rows = conn.execute(
+        'SELECT Image_Id, image_doc_name, image_name, image_type '
+        'FROM Images WHERE theme_id = ? ORDER BY Image_Id',
+        (theme_id,)
+    ).fetchall()
+
+    block_id = theme['block_id']
+    markdown_path = os.path.join(BASE_DIR, 'Notes', f'{block_id}-{theme_id}.md')
+    markdown_content = ''
+    if os.path.exists(markdown_path):
+        with open(markdown_path, 'r', encoding='utf-8', errors='replace') as f:
+            markdown_content = f.read()
+
+    images_list = []
+    for img in images_rows:
+        img_url = find_image_file(block_id, theme_id, img['image_type'], img['Image_Id'])
+        is_in_note = False
+        target_pattern = rf'!\[[^\]]*\]\([^\)]*?{block_id}-{theme_id}-{img["image_type"]}-{img["Image_Id"]}\.[a-zA-Z0-9]+\)'
+        if re.search(target_pattern, markdown_content):
+            is_in_note = True
+            markdown_content = re.sub(target_pattern, f'!___{img["image_doc_name"]}___', markdown_content)
+
+        images_list.append({
+            'id': img['Image_Id'],
+            'doc_name': img['image_doc_name'],
+            'name': img['image_name'],
+            'type': img['image_type'],
+            'url': img_url or '',
+            'show_in_note': is_in_note
+        })
+
+    persons_rows = conn.execute(
+        'SELECT Person_Id, Person_name, Person_description, block_id '
+        'FROM Person WHERE block_id = ? ORDER BY Person_Id',
+        (block_id,)
+    ).fetchall()
+    conn.close()
+
+    persons_list = []
+    for p in persons_rows:
+        img_url = find_person_image_file(block_id, p['Person_Id'])
+        persons_list.append({
+            'id': p['Person_Id'],
+            'name': p['Person_name'],
+            'bio': p['Person_description'],
+            'imageUrl': img_url or ''
+        })
+
+    return jsonify({
+        'id': theme['Theme_Id'],
+        'theme_name': theme['theme_name'],
+        'block_id': block_id,
+        'block_name': theme['Block_Name'],
+        'raw_markdown': markdown_content,
+        'dates': [
+            {
+                'id': d['Date_Id'],
+                'name': d['Date_name'],
+                'description': d['Date_description'],
+                'is_mandatory': d['Is_Mandority']
+            }
+            for d in dates_rows
+        ],
+        'terms': [
+            {
+                'id': t['Term_Id'],
+                'name': t['Term_name'],
+                'description': t['Term_description']
+            }
+            for t in terms_rows
+        ],
+        'images': images_list,
+        'persons': persons_list
+    })
+
+@app.route('/api/admin/themes/<int:theme_id>/update', methods=['POST'])
+@login_required
+def update_admin_theme(theme_id):
+    conn = get_db_connection()
+    theme = conn.execute('SELECT Theme_Id, theme_name, block_id FROM Themes WHERE Theme_Id = ?', (theme_id,)).fetchone()
+    if not theme:
+        conn.close()
+        abort(404, description='Тему не знайдено')
+
+    old_block_id = theme['block_id']
+    block_name = request.form.get('block_name', '').strip()
+    theme_name = request.form.get('theme_name', '').strip()
+    raw_markdown = request.form.get('markdown', '')
+
+    if not block_name or not theme_name:
+        conn.close()
+        return jsonify({'error': 'Назва блоку та теми обов’язкові'}), 400
+
+    cur = conn.cursor()
+    block = cur.execute('SELECT Block_Id, Block_Name FROM Blocks WHERE LOWER(Block_Name) = LOWER(?)', (block_name,)).fetchone()
+    if block:
+        new_block_id = block['Block_Id']
+    else:
+        cur.execute('INSERT INTO Blocks (Block_Name) VALUES (?)', (block_name,))
+        new_block_id = cur.lastrowid
+
+    existing_theme = cur.execute(
+        'SELECT Theme_Id FROM Themes WHERE block_id = ? AND LOWER(theme_name) = LOWER(?) AND Theme_Id != ?',
+        (new_block_id, theme_name, theme_id)
+    ).fetchone()
+    if existing_theme:
+        conn.close()
+        return jsonify({'error': f'Тема "{theme_name}" вже існує в цьому блоці'}), 400
+
+    cur.execute('UPDATE Themes SET theme_name = ?, block_id = ? WHERE Theme_Id = ?', (theme_name, new_block_id, theme_id))
+
+    if old_block_id != new_block_id:
+        old_note = os.path.join(BASE_DIR, 'Notes', f'{old_block_id}-{theme_id}.md')
+        new_note = os.path.join(BASE_DIR, 'Notes', f'{new_block_id}-{theme_id}.md')
+        if os.path.exists(old_note):
+            shutil.move(old_note, new_note)
+
+    try:
+        dates_data = json.loads(request.form.get('dates', '[]'))
+        terms_data = json.loads(request.form.get('terms', '[]'))
+        images_data = json.loads(request.form.get('images', '[]'))
+        persons_data = json.loads(request.form.get('persons', '[]'))
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': f'Некоректний формат JSON: {str(e)}'}), 400
+
+    cur.execute('DELETE FROM Dates WHERE theme_id = ?', (theme_id,))
+    for d in dates_data:
+        d_name = d.get('name', '').strip()
+        d_desc = d.get('description', '').strip()
+        d_mand = 1 if str(d.get('is_mandatory')) in ('1', 'true', 'True') else 0
+        if d_name:
+            cur.execute('INSERT INTO Dates (Date_name, Date_description, Is_Mandority, theme_id) VALUES (?, ?, ?, ?)', (d_name, d_desc, d_mand, theme_id))
+
+    cur.execute('DELETE FROM Terms WHERE theme_id = ?', (theme_id,))
+    for t in terms_data:
+        t_name = t.get('name', '').strip()
+        t_desc = t.get('description', '').strip()
+        if t_name:
+            cur.execute('INSERT INTO Terms (Term_name, Term_description, theme_id) VALUES (?, ?, ?)', (t_name, t_desc, theme_id))
+
+    for idx, per in enumerate(persons_data):
+        p_name = per.get('name', '').strip()
+        p_bio = per.get('bio', '').strip()
+        if not p_name:
+            continue
+        p_row = cur.execute('SELECT Person_Id FROM Person WHERE block_id = ? AND LOWER(Person_name) = LOWER(?)', (new_block_id, p_name)).fetchone()
+        if p_row:
+            p_id = p_row['Person_Id']
+            if p_bio:
+                cur.execute('UPDATE Person SET Person_description = ? WHERE Person_Id = ?', (p_bio, p_id))
+        else:
+            cur.execute('INSERT INTO Person (Person_name, Person_description, block_id) VALUES (?, ?, ?)', (p_name, p_bio, new_block_id))
+            p_id = cur.lastrowid
+
+        p_file = request.files.get(f'person_photo_{p_name}') or request.files.get(f'person_photo_{idx}')
+        if p_file and p_file.filename:
+            ext = os.path.splitext(p_file.filename)[1] or '.jpg'
+            dst_name = f"{new_block_id}-{p_id}{ext}"
+            dst_path = os.path.join(BASE_DIR, 'PersonImages', dst_name)
+            p_file.save(dst_path)
+
+    existing_img_rows = cur.execute('SELECT Image_Id, image_doc_name, image_type FROM Images WHERE theme_id = ?', (theme_id,)).fetchall()
+    kept_img_ids = set()
+
+    final_markdown = raw_markdown
+    for idx, img in enumerate(images_data):
+        doc_name = img.get('doc_name', '').strip()
+        display_name = img.get('name', doc_name).strip() or doc_name
+        img_type = 1 if str(img.get('type')) in ('1', 'monuments') else 0
+        img_id = img.get('id')
+        show_in_note = bool(img.get('show_in_note'))
+
+        if img_id:
+            cur.execute(
+                'UPDATE Images SET image_doc_name = ?, image_name = ?, image_type = ? WHERE Image_Id = ?',
+                (doc_name, display_name, img_type, img_id)
+            )
+            kept_img_ids.add(int(img_id))
+            curr_id = int(img_id)
+        else:
+            cur.execute(
+                'INSERT INTO Images (image_doc_name, image_name, theme_id, image_type) VALUES (?, ?, ?, ?)',
+                (doc_name, display_name, theme_id, img_type)
+            )
+            curr_id = cur.lastrowid
+            kept_img_ids.add(curr_id)
+
+        file_obj = request.files.get(f'image_file_{doc_name}') or request.files.get(f'image_file_{idx}')
+        target_ext = '.png'
+        if file_obj and file_obj.filename:
+            target_ext = os.path.splitext(file_obj.filename)[1] or '.png'
+            target_filename = f"{new_block_id}-{theme_id}-{img_type}-{curr_id}{target_ext}"
+            target_path = os.path.join(BASE_DIR, 'Images', target_filename)
+            file_obj.save(target_path)
+            target_url = f"/Images/{target_filename}"
+        else:
+            existing_url = find_image_file(new_block_id, theme_id, img_type, curr_id) or find_image_file(old_block_id, theme_id, img_type, curr_id)
+            if existing_url and old_block_id != new_block_id:
+                old_fname = os.path.basename(existing_url)
+                target_ext = os.path.splitext(old_fname)[1]
+                new_fname = f"{new_block_id}-{theme_id}-{img_type}-{curr_id}{target_ext}"
+                shutil.move(os.path.join(BASE_DIR, 'Images', old_fname), os.path.join(BASE_DIR, 'Images', new_fname))
+                target_url = f"/Images/{new_fname}"
+            else:
+                target_url = existing_url or f"/Images/{new_block_id}-{theme_id}-{img_type}-{curr_id}.png"
+
+        if show_in_note and doc_name:
+            pattern = re.compile(r'!___' + re.escape(doc_name) + r'___')
+            final_markdown = pattern.sub(f'![Картинка]({target_url})', final_markdown)
+
+    for ex in existing_img_rows:
+        if ex['Image_Id'] not in kept_img_ids:
+            cur.execute('DELETE FROM Images WHERE Image_Id = ?', (ex['Image_Id'],))
+            pfx = f"{old_block_id}-{theme_id}-{ex['image_type']}-{ex['Image_Id']}."
+            img_dir = os.path.join(BASE_DIR, 'Images')
+            if os.path.exists(img_dir):
+                for fn in os.listdir(img_dir):
+                    if fn.lower().startswith(pfx.lower()):
+                        try:
+                            os.remove(os.path.join(img_dir, fn))
+                        except Exception:
+                            pass
+
+    note_path = os.path.join(BASE_DIR, 'Notes', f'{new_block_id}-{theme_id}.md')
+    with open(note_path, 'w', encoding='utf-8') as f:
+        f.write(final_markdown)
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'ok', 'message': 'Конспект успішно оновлено'})
+
+@app.route('/api/admin/themes/<int:theme_id>', methods=['DELETE'])
+@login_required
+def delete_admin_theme(theme_id):
+    conn = get_db_connection()
+    theme = conn.execute('SELECT Theme_Id, block_id FROM Themes WHERE Theme_Id = ?', (theme_id,)).fetchone()
+    if not theme:
+        conn.close()
+        abort(404, description='Тему не знайдено')
+
+    block_id = theme['block_id']
+    cur = conn.cursor()
+    cur.execute('DELETE FROM Dates WHERE theme_id = ?', (theme_id,))
+    cur.execute('DELETE FROM Terms WHERE theme_id = ?', (theme_id,))
+
+    img_rows = cur.execute('SELECT Image_Id, image_type FROM Images WHERE theme_id = ?', (theme_id,)).fetchall()
+    img_dir = os.path.join(BASE_DIR, 'Images')
+    if os.path.exists(img_dir):
+        for img in img_rows:
+            pfx = f"{block_id}-{theme_id}-{img['image_type']}-{img['Image_Id']}."
+            for fn in os.listdir(img_dir):
+                if fn.lower().startswith(pfx.lower()):
+                    try:
+                        os.remove(os.path.join(img_dir, fn))
+                    except Exception:
+                        pass
+
+    cur.execute('DELETE FROM Images WHERE theme_id = ?', (theme_id,))
+    cur.execute('DELETE FROM Themes WHERE Theme_Id = ?', (theme_id,))
+    conn.commit()
+    conn.close()
+
+    note_path = os.path.join(BASE_DIR, 'Notes', f'{block_id}-{theme_id}.md')
+    if os.path.exists(note_path):
+        try:
+            os.remove(note_path)
+        except Exception:
+            pass
+
+    return jsonify({'status': 'ok', 'message': 'Тему та всі пов’язані файли успішно видалено'})
+
+@app.route('/api/admin/reparse', methods=['POST'])
+@login_required
+def admin_reparse_markdown():
+    data = request.get_json(silent=True) or {}
+    markdown = data.get('markdown', '')
+    current_dates = data.get('current_dates', [])
+    current_terms = data.get('current_terms', [])
+    current_images = data.get('current_images', [])
+    current_persons = data.get('current_persons', [])
+
+    dates, terms, images, raw_persons = scan_markdown_tokens(markdown)
+
+    d_map = {d.get('name', '').strip().lower(): d for d in current_dates if d.get('name')}
+    final_dates = []
+    for d in dates:
+        if d.lower() in d_map:
+            final_dates.append(d_map[d.lower()])
+        else:
+            final_dates.append({'name': d, 'description': '', 'is_mandatory': 0})
+
+    t_map = {t.get('name', '').strip().lower(): t for t in current_terms if t.get('name')}
+    final_terms = []
+    for t in terms:
+        if t.lower() in t_map:
+            final_terms.append(t_map[t.lower()])
+        else:
+            final_terms.append({'name': t, 'description': ''})
+
+    i_map = {i.get('doc_name', '').strip().lower(): i for i in current_images if i.get('doc_name')}
+    final_images = []
+    for k, img in images.items():
+        if k in i_map:
+            existing = dict(i_map[k])
+            existing['show_in_note'] = img['show_in_note']
+            final_images.append(existing)
+        else:
+            final_images.append(img)
+
+    p_map = {p.get('name', '').strip().lower(): p for p in current_persons if p.get('name')}
+    final_persons = []
+    for p in raw_persons:
+        if p.lower() in p_map:
+            final_persons.append(p_map[p.lower()])
+        else:
+            final_persons.append({'name': p, 'bio': ''})
+
+    return jsonify({
+        'dates': final_dates,
+        'terms': final_terms,
+        'images': final_images,
+        'persons': final_persons
+    })
+
+@app.route('/api/admin/suggestions')
+@login_required
+def get_admin_suggestions():
+    conn = get_db_connection()
+    rows = conn.execute('SELECT id, target_type, target_id, target_name, comment, created_at, status FROM Suggestions WHERE status = "pending" ORDER BY id DESC').fetchall()
+    conn.close()
+
+    result = []
+    for r in rows:
+        result.append({
+            'id': r['id'],
+            'target_type': r['target_type'],
+            'target_id': r['target_id'],
+            'target_name': r['target_name'],
+            'comment': r['comment'],
+            'created_at': r['created_at'],
+            'status': r['status']
+        })
+
+    return jsonify(result)
+
+@app.route('/api/admin/suggestions/<int:id>/resolve', methods=['POST'])
+@login_required
+def resolve_admin_suggestion(id):
+    conn = get_db_connection()
+    conn.execute('UPDATE Suggestions SET status = "resolved" WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'ok', 'message': 'Пропозицію позначено як виконану'})
+
+@app.route('/api/admin/persons/<int:person_id>')
+@login_required
+def get_admin_person(person_id):
+    conn = get_db_connection()
+    p = conn.execute(
+        'SELECT p.Person_Id, p.Person_name, p.Person_description, p.block_id, b.Block_Name '
+        'FROM Person p '
+        'JOIN Blocks b ON p.block_id = b.Block_Id '
+        'WHERE p.Person_Id = ?',
+        (person_id,)
+    ).fetchone()
+    conn.close()
+
+    if not p:
+        abort(404, description='Діяча не знайдено')
+
+    img_url = find_person_image_file(p['block_id'], p['Person_Id'])
+    return jsonify({
+        'id': p['Person_Id'],
+        'name': p['Person_name'],
+        'bio': p['Person_description'],
+        'block_id': p['block_id'],
+        'block_name': p['Block_Name'],
+        'imageUrl': img_url or ''
+    })
+
+@app.route('/api/admin/persons/<int:person_id>/update', methods=['POST'])
+@login_required
+def update_admin_person(person_id):
+    conn = get_db_connection()
+    p = conn.execute('SELECT Person_Id, block_id FROM Person WHERE Person_Id = ?', (person_id,)).fetchone()
+    if not p:
+        conn.close()
+        abort(404, description='Діяча не знайдено')
+
+    name = request.form.get('name', '').strip()
+    bio = request.form.get('bio', '').strip()
+
+    if not name:
+        conn.close()
+        return jsonify({'error': 'Ім’я діяча не може бути порожнім'}), 400
+
+    conn.execute('UPDATE Person SET Person_name = ?, Person_description = ? WHERE Person_Id = ?', (name, bio, person_id))
+
+    file_obj = request.files.get('photo')
+    if file_obj and file_obj.filename:
+        ext = os.path.splitext(file_obj.filename)[1] or '.jpg'
+        os.makedirs(os.path.join(BASE_DIR, 'PersonImages'), exist_ok=True)
+        fname = f"{p['block_id']}-{person_id}{ext}"
+        fpath = os.path.join(BASE_DIR, 'PersonImages', fname)
+        file_obj.save(fpath)
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'ok', 'message': 'Дані діяча успішно оновлено'})
 
 @app.route('/<path:filename>')
 def serve_root_files(filename):
