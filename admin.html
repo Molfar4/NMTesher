@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Адмін-панель - NMTesher</title>
+  <style>
+    :root {
+      --c-primary-dark: #624621;
+      --c-primary: #9F6D2D;
+      --c-accent-peach: #F8DAB2;
+      --c-bg-paper: #EEEBE4;
+      --c-border: #D2D2D2;
+      --c-accent-red: #E93C35;
+      --c-secondary-blue: #B9C7D2;
+      --c-muted: #989398;
+      --c-slate-blue: #627C8C;
+      --c-text-dark: #2B3034;
+      --c-surface: #FDFCFA;
+      --c-surface-card: #FFFFFF;
+      --c-success: #2E7D32;
+      --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: var(--font-main);
+      background-color: var(--c-bg-paper);
+      color: var(--c-text-dark);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header.admin-header {
+      background: rgba(238, 235, 228, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid var(--c-border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-title span.badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--c-accent-peach);
+      color: var(--c-primary-dark);
+      padding: 3px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--c-primary);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text-dark);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: var(--c-accent-peach);
+      border-color: var(--c-primary);
+    }
+    .btn-primary {
+      background: var(--c-primary);
+      color: #FFFFFF;
+      border-color: var(--c-primary-dark);
+    }
+    .btn-primary:hover {
+      background: var(--c-primary-dark);
+      color: #FFFFFF;
+    }
+    .btn-success {
+      background: var(--c-success);
+      color: #FFFFFF;
+      border-color: #1b5e20;
+    }
+    .btn-success:hover {
+      background: #1b5e20;
+      color: #FFFFFF;
+    }
+    .btn-danger {
+      background: var(--c-surface);
+      color: var(--c-accent-red);
+      border-color: var(--c-accent-red);
+    }
+    .btn-danger:hover {
+      background: var(--c-accent-red);
+      color: #FFFFFF;
+    }
+    .admin-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 24px auto;
+      padding: 0 20px;
+      flex: 1;
+    }
+    .alert-banner {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .alert-banner.success {
+      display: block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+    .alert-banner.error {
+      display: block;
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+    }
+    .section-card {
+      background: var(--c-surface-card);
+      border: 1px solid var(--c-border);
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+    .section-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drafts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+    }
+    .draft-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      transition: all 0.2s ease;
+    }
+    .draft-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border-color: var(--c-primary);
+    }
+    .draft-card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .draft-block-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--c-slate-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .draft-theme-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--c-text-dark);
+    }
+    .draft-date {
+      font-size: 0.78rem;
+      color: var(--c-muted);
+    }
+    .draft-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .stat-chip {
+      background: rgba(238, 235, 228, 0.7);
+      border: 1px solid var(--c-border);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--c-text-dark);
+    }
+    .draft-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 10px;
+      border-top: 1px dashed var(--c-border);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--c-muted);
+      font-size: 1rem;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--c-primary-dark);
+      margin-bottom: 6px;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text-dark);
+      font-family: inherit;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 2px rgba(159, 109, 45, 0.15);
+    }
+    .form-textarea {
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .items-table th {
+      text-align: left;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--c-primary-dark);
+      padding: 8px 10px;
+      border-bottom: 2px solid var(--c-border);
+    }
+    .items-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--c-border);
+      vertical-align: middle;
+    }
+    .item-card-row {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .row-two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .row-preview-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .preview-thumb {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid var(--c-border);
+      background: #FFFFFF;
+    }
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--c-text-dark);
+      cursor: pointer;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .sticky-bottom-bar {
+      position: sticky;
+      bottom: 0;
+      background: rgba(254, 253, 250, 0.96);
+      backdrop-filter: blur(8px);
+      border-top: 2px solid var(--c-border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 8px;
+      margin-top: 20px;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-top-color: var(--c-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @media (max-width: 768px) {
+      .row-two-cols {
+        grid-template-columns: 1fr;
+      }
+      .sticky-bottom-bar {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="admin-header">
+    <div class="header-title">
+      <span>NMTesher</span>
+      <span class="badge">Адмін-панель</span>
+    </div>
+    <div class="header-actions">
+      <a href="/" class="btn">🏠 На головну</a>
+      <a href="/admin/logout" class="btn btn-danger">🚪 Вийти</a>
+    </div>
+  </header>
+
+  <div class="admin-container">
+    <div id="alertBanner" class="alert-banner"></div>
+
+    <div id="draftsListView">
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
+            <span>📋 Чернетки конспектів</span>
+            <span id="draftsCountBadge" class="stat-chip">0</span>
+          </div>
+          <button id="refreshDraftsBtn" class="btn" type="button">🔄 Оновити</button>
+        </div>
+        <div id="draftsContainer" class="drafts-grid">
+          <div class="empty-state">Завантаження чернеток...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="draftEditorView" style="display: none;">
+      <div style="margin-bottom: 16px;">
+        <button id="backToListBtn" class="btn" type="button">← Повернутися до списку чернеток</button>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
+            <span>✏️ Редагування конспекту</span>
+          </div>
+          <div id="currentDraftIdBadge" class="stat-chip">Чернетка #</div>
+        </div>
+
+        <div class="row-two-cols">
+          <div class="form-group">
+            <label class="form-label">Блок конспекту:</label>
+            <input type="text" id="editBlockName" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Назва теми:</label>
+            <input type="text" id="editThemeName" class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Текст конспекту (Markdown):</label>
+          <textarea id="editMarkdown" class="form-textarea" style="min-height: 220px; font-family: monospace;"></textarea>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
+            <span>📅 Дати</span>
+          </div>
+          <button id="addDateBtn" class="btn" type="button">+ Додати дату</button>
+        </div>
+        <div id="datesListContainer"></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
+            <span>📖 Терміни</span>
+          </div>
+          <button id="addTermBtn" class="btn" type="button">+ Додати термін</button>
+        </div>
+        <div id="termsListContainer"></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
+            <span>🖼️ Зображення</span>
+          </div>
+          <button id="addImageBtn" class="btn" type="button">+ Додати зображення</button>
+        </div>
+        <div id="imagesListContainer"></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header-row">
+          <div class="section-title">
+            <span>👤 Видатні діячі</span>
+          </div>
+          <button id="addPersonBtn" class="btn" type="button">+ Додати діяча</button>
+        </div>
+        <div id="personsListContainer"></div>
+      </div>
+
+      <div class="sticky-bottom-bar">
+        <div>
+          <button id="deleteDraftFromEditorBtn" class="btn btn-danger" type="button">🗑️ Видалити чернетку</button>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button id="saveDraftBtn" class="btn btn-primary" type="button">💾 Зберегти зміни</button>
+          <button id="publishDraftBtn" class="btn btn-success" type="button">🚀 Затвердити та опублікувати</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeDraft = null;
+    let draftsData = [];
+
+    function showAlert(message, isError = false) {
+      const banner = document.getElementById('alertBanner');
+      banner.className = isError ? 'alert-banner error' : 'alert-banner success';
+      banner.textContent = message;
+      banner.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 5000);
+    }
+
+    async function loadDrafts() {
+      const container = document.getElementById('draftsContainer');
+      const badge = document.getElementById('draftsCountBadge');
+      container.innerHTML = '<div class="empty-state">Завантаження...</div>';
+
+      try {
+        const res = await fetch('/api/admin/drafts');
+        if (!res.ok) throw new Error('Помилка завантаження чернеток');
+        draftsData = await res.json();
+        badge.textContent = draftsData.length;
+
+        if (draftsData.length === 0) {
+          container.innerHTML = '<div class="empty-state">Наразі немає збережених чернеток конспектів.</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        draftsData.forEach(d => {
+          const card = document.createElement('div');
+          card.className = 'draft-card';
+          card.innerHTML = `
+            <div class="draft-card-header">
+              <span class="draft-block-tag">${escapeHtml(d.block_name)}</span>
+              <h3 class="draft-theme-title">${escapeHtml(d.theme_name)}</h3>
+              <span class="draft-date">Створено: ${escapeHtml(d.created_at || '')}</span>
+            </div>
+            <div class="draft-stats">
+              <span class="stat-chip">📅 ${d.dates_count} дат</span>
+              <span class="stat-chip">📖 ${d.terms_count} термінів</span>
+              <span class="stat-chip">🖼️ ${d.images_count} зображень</span>
+              <span class="stat-chip">👤 ${d.persons_count} діячів</span>
+            </div>
+            <div class="draft-card-actions">
+              <button class="btn btn-primary btn-edit" data-id="${d.id}" type="button">✏️ Редагувати</button>
+              <button class="btn btn-success btn-quick-approve" data-id="${d.id}" type="button">⚡ Додати одразу</button>
+              <button class="btn btn-danger btn-delete" data-id="${d.id}" type="button">🗑️</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+        container.querySelectorAll('.btn-edit').forEach(btn => {
+          btn.addEventListener('click', () => openDraftEditor(Number(btn.dataset.id)));
+        });
+        container.querySelectorAll('.btn-quick-approve').forEach(btn => {
+          btn.addEventListener('click', () => quickApproveDraft(Number(btn.dataset.id)));
+        });
+        container.querySelectorAll('.btn-delete').forEach(btn => {
+          btn.addEventListener('click', () => deleteDraft(Number(btn.dataset.id)));
+        });
+
+      } catch (err) {
+        container.innerHTML = `<div class="empty-state" style="color: var(--c-accent-red);">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    async function openDraftEditor(draftId) {
+      try {
+        const res = await fetch(`/api/admin/drafts/${draftId}`);
+        if (!res.ok) throw new Error('Не вдалося отримати чернетку');
+        activeDraft = await res.json();
+
+        document.getElementById('currentDraftIdBadge').textContent = `Чернетка #${activeDraft.id}`;
+        document.getElementById('editBlockName').value = activeDraft.block_name || '';
+        document.getElementById('editThemeName').value = activeDraft.theme_name || '';
+        document.getElementById('editMarkdown').value = activeDraft.raw_markdown || '';
+
+        renderDatesEditor(activeDraft.dates || []);
+        renderTermsEditor(activeDraft.terms || []);
+        renderImagesEditor(activeDraft.images || []);
+        renderPersonsEditor(activeDraft.persons || []);
+
+        document.getElementById('draftsListView').style.display = 'none';
+        document.getElementById('draftEditorView').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    function closeDraftEditor() {
+      activeDraft = null;
+      document.getElementById('draftEditorView').style.display = 'none';
+      document.getElementById('draftsListView').style.display = 'block';
+      loadDrafts();
+    }
+
+    function renderDatesEditor(dates) {
+      const container = document.getElementById('datesListContainer');
+      container.innerHTML = '';
+      if (!dates || dates.length === 0) {
+        container.innerHTML = '<div style="color: var(--c-muted); font-size: 0.85rem; padding: 6px 0;">Дат немає.</div>';
+        return;
+      }
+      dates.forEach((d, idx) => {
+        const row = document.createElement('div');
+        row.className = 'item-card-row';
+        row.innerHTML = `
+          <div class="row-two-cols">
+            <div>
+              <label class="form-label">Дата (з розмітки):</label>
+              <input type="text" class="form-input date-input-name" data-idx="${idx}" value="${escapeHtml(d.name || '')}" />
+            </div>
+            <div>
+              <label class="form-label">Пояснення / подія:</label>
+              <input type="text" class="form-input date-input-desc" data-idx="${idx}" value="${escapeHtml(d.description || '')}" />
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+            <label class="checkbox-label">
+              <input type="checkbox" class="date-input-mand" data-idx="${idx}" ${d.is_mandatory ? 'checked' : ''} />
+              <span>Обов'язкова дата для запам'ятовування (Is_Mandority)</span>
+            </label>
+            <button class="btn btn-danger remove-date-btn" data-idx="${idx}" type="button" style="padding: 4px 10px; font-size: 0.78rem;">Видалити</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      container.querySelectorAll('.remove-date-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          collectCurrentEditorData();
+          activeDraft.dates.splice(Number(b.dataset.idx), 1);
+          renderDatesEditor(activeDraft.dates);
+        });
+      });
+    }
+
+    function renderTermsEditor(terms) {
+      const container = document.getElementById('termsListContainer');
+      container.innerHTML = '';
+      if (!terms || terms.length === 0) {
+        container.innerHTML = '<div style="color: var(--c-muted); font-size: 0.85rem; padding: 6px 0;">Термінів немає.</div>';
+        return;
+      }
+      terms.forEach((t, idx) => {
+        const row = document.createElement('div');
+        row.className = 'item-card-row';
+        row.innerHTML = `
+          <div class="row-two-cols">
+            <div>
+              <label class="form-label">Термін:</label>
+              <input type="text" class="form-input term-input-name" data-idx="${idx}" value="${escapeHtml(t.name || '')}" />
+            </div>
+            <div>
+              <label class="form-label">Визначення:</label>
+              <input type="text" class="form-input term-input-desc" data-idx="${idx}" value="${escapeHtml(t.description || '')}" />
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+            <button class="btn btn-danger remove-term-btn" data-idx="${idx}" type="button" style="padding: 4px 10px; font-size: 0.78rem;">Видалити</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      container.querySelectorAll('.remove-term-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          collectCurrentEditorData();
+          activeDraft.terms.splice(Number(b.dataset.idx), 1);
+          renderTermsEditor(activeDraft.terms);
+        });
+      });
+    }
+
+    function renderImagesEditor(images) {
+      const container = document.getElementById('imagesListContainer');
+      container.innerHTML = '';
+      if (!images || images.length === 0) {
+        container.innerHTML = '<div style="color: var(--c-muted); font-size: 0.85rem; padding: 6px 0;">Зображень немає.</div>';
+        return;
+      }
+      images.forEach((img, idx) => {
+        const row = document.createElement('div');
+        row.className = 'item-card-row';
+        const isMonuments = img.type === 1 || img.type === '1' || img.type === 'monuments';
+        const previewUrl = img.file_path ? `/${img.file_path}` : '';
+        row.innerHTML = `
+          <div class="row-two-cols">
+            <div>
+              <label class="form-label">Назва з розмітки (doc_name):</label>
+              <input type="text" class="form-input image-input-doc" data-idx="${idx}" value="${escapeHtml(img.doc_name || '')}" />
+            </div>
+            <div>
+              <label class="form-label">Назва для галереї (image_name):</label>
+              <input type="text" class="form-input image-input-name" data-idx="${idx}" value="${escapeHtml(img.name || img.doc_name || '')}" />
+            </div>
+          </div>
+          <div class="row-two-cols" style="align-items: center;">
+            <div>
+              <label class="form-label">Тип зображення:</label>
+              <select class="form-select image-input-type" data-idx="${idx}">
+                <option value="0" ${!isMonuments ? 'selected' : ''}>Карти (тип 0)</option>
+                <option value="1" ${isMonuments ? 'selected' : ''}>Пам'ятки (тип 1)</option>
+              </select>
+            </div>
+            <div style="padding-top: 20px;">
+              <label class="checkbox-label">
+                <input type="checkbox" class="image-input-show" data-idx="${idx}" ${img.show_in_note ? 'checked' : ''} />
+                <span>Показувати в конспекті (!___...___)</span>
+              </label>
+            </div>
+          </div>
+          <div class="row-preview-wrapper">
+            ${previewUrl ? `<img src="${previewUrl}" class="preview-thumb" alt="Прев'ю" />` : '<div class="preview-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--c-muted);font-size:0.75rem;">Немає</div>'}
+            <div style="flex: 1;">
+              <label class="form-label">${previewUrl ? 'Замінити файл зображення:' : 'Завантажити файл зображення:'}</label>
+              <input type="file" class="form-input image-file-input" data-idx="${idx}" accept="image/*" />
+            </div>
+            <div>
+              <button class="btn btn-danger remove-image-btn" data-idx="${idx}" type="button" style="padding: 4px 10px; font-size: 0.78rem;">Видалити</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      container.querySelectorAll('.remove-image-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          collectCurrentEditorData();
+          activeDraft.images.splice(Number(b.dataset.idx), 1);
+          renderImagesEditor(activeDraft.images);
+        });
+      });
+    }
+
+    function renderPersonsEditor(persons) {
+      const container = document.getElementById('personsListContainer');
+      container.innerHTML = '';
+      if (!persons || persons.length === 0) {
+        container.innerHTML = '<div style="color: var(--c-muted); font-size: 0.85rem; padding: 6px 0;">Діячів немає.</div>';
+        return;
+      }
+      persons.forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'item-card-row';
+        const previewUrl = p.photo_path ? `/${p.photo_path}` : '';
+        row.innerHTML = `
+          <div>
+            <label class="form-label">Ім'я діяча:</label>
+            <input type="text" class="form-input person-input-name" data-idx="${idx}" value="${escapeHtml(p.name || '')}" />
+          </div>
+          <div>
+            <label class="form-label">Біографія:</label>
+            <textarea class="form-textarea person-input-bio" data-idx="${idx}" style="min-height: 80px;">${escapeHtml(p.bio || '')}</textarea>
+          </div>
+          <div class="row-preview-wrapper">
+            ${previewUrl ? `<img src="${previewUrl}" class="preview-thumb" alt="Портрет" />` : '<div class="preview-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--c-muted);font-size:0.75rem;">Немає</div>'}
+            <div style="flex: 1;">
+              <label class="form-label">${previewUrl ? 'Замінити портрет діяча:' : 'Завантажити портрет діяча:'}</label>
+              <input type="file" class="form-input person-file-input" data-idx="${idx}" accept="image/*" />
+            </div>
+            <div>
+              <button class="btn btn-danger remove-person-btn" data-idx="${idx}" type="button" style="padding: 4px 10px; font-size: 0.78rem;">Видалити</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      container.querySelectorAll('.remove-person-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          collectCurrentEditorData();
+          activeDraft.persons.splice(Number(b.dataset.idx), 1);
+          renderPersonsEditor(activeDraft.persons);
+        });
+      });
+    }
+
+    function collectCurrentEditorData() {
+      if (!activeDraft) return;
+      activeDraft.block_name = document.getElementById('editBlockName').value.trim();
+      activeDraft.theme_name = document.getElementById('editThemeName').value.trim();
+      activeDraft.raw_markdown = document.getElementById('editMarkdown').value;
+
+      const dateNames = document.querySelectorAll('.date-input-name');
+      const dateDescs = document.querySelectorAll('.date-input-desc');
+      const dateMands = document.querySelectorAll('.date-input-mand');
+      activeDraft.dates = [];
+      dateNames.forEach((input, i) => {
+        activeDraft.dates.push({
+          name: input.value.trim(),
+          description: dateDescs[i] ? dateDescs[i].value.trim() : '',
+          is_mandatory: dateMands[i] && dateMands[i].checked ? 1 : 0
+        });
+      });
+
+      const termNames = document.querySelectorAll('.term-input-name');
+      const termDescs = document.querySelectorAll('.term-input-desc');
+      activeDraft.terms = [];
+      termNames.forEach((input, i) => {
+        activeDraft.terms.push({
+          name: input.value.trim(),
+          description: termDescs[i] ? termDescs[i].value.trim() : ''
+        });
+      });
+
+      const imgDocs = document.querySelectorAll('.image-input-doc');
+      const imgNames = document.querySelectorAll('.image-input-name');
+      const imgTypes = document.querySelectorAll('.image-input-type');
+      const imgShows = document.querySelectorAll('.image-input-show');
+      const newImages = [];
+      imgDocs.forEach((input, i) => {
+        const old = (activeDraft.images && activeDraft.images[i]) ? activeDraft.images[i] : {};
+        newImages.push({
+          doc_name: input.value.trim(),
+          name: imgNames[i] ? imgNames[i].value.trim() : input.value.trim(),
+          type: imgTypes[i] ? Number(imgTypes[i].value) : 0,
+          show_in_note: imgShows[i] ? imgShows[i].checked : true,
+          file_path: old.file_path || ''
+        });
+      });
+      activeDraft.images = newImages;
+
+      const personNames = document.querySelectorAll('.person-input-name');
+      const personBios = document.querySelectorAll('.person-input-bio');
+      const newPersons = [];
+      personNames.forEach((input, i) => {
+        const old = (activeDraft.persons && activeDraft.persons[i]) ? activeDraft.persons[i] : {};
+        newPersons.push({
+          name: input.value.trim(),
+          bio: personBios[i] ? personBios[i].value.trim() : '',
+          photo_path: old.photo_path || ''
+        });
+      });
+      activeDraft.persons = newPersons;
+    }
+
+    async function saveDraftChanges() {
+      if (!activeDraft) return;
+      collectCurrentEditorData();
+
+      const formData = new FormData();
+      formData.append('block_name', activeDraft.block_name);
+      formData.append('theme_name', activeDraft.theme_name);
+      formData.append('markdown', activeDraft.raw_markdown);
+      formData.append('dates', JSON.stringify(activeDraft.dates));
+      formData.append('terms', JSON.stringify(activeDraft.terms));
+      formData.append('images', JSON.stringify(activeDraft.images));
+      formData.append('persons', JSON.stringify(activeDraft.persons));
+
+      const imgFileInputs = document.querySelectorAll('.image-file-input');
+      imgFileInputs.forEach(input => {
+        if (input.files.length > 0) {
+          const idx = input.dataset.idx;
+          formData.append(`image_file_${idx}`, input.files[0]);
+        }
+      });
+
+      const personFileInputs = document.querySelectorAll('.person-file-input');
+      personFileInputs.forEach(input => {
+        if (input.files.length > 0) {
+          const idx = input.dataset.idx;
+          formData.append(`person_photo_${idx}`, input.files[0]);
+        }
+      });
+
+      const saveBtn = document.getElementById('saveDraftBtn');
+      const originalText = saveBtn.textContent;
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Збереження...';
+
+      try {
+        const res = await fetch(`/api/admin/drafts/${activeDraft.id}/update`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка збереження');
+        showAlert('Зміни успішно збережено в чернетку!');
+        await openDraftEditor(activeDraft.id);
+      } catch (err) {
+        showAlert(err.message, true);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+    }
+
+    async function publishDraft() {
+      if (!activeDraft) return;
+      if (!confirm(`Опублікувати тему "${activeDraft.theme_name}" у блоці "${activeDraft.block_name}"? Дані буде записано в базу та файли.`)) {
+        return;
+      }
+
+      await saveDraftChanges();
+
+      const publishBtn = document.getElementById('publishDraftBtn');
+      const originalText = publishBtn.textContent;
+      publishBtn.disabled = true;
+      publishBtn.textContent = 'Публікація...';
+
+      try {
+        const res = await fetch(`/api/admin/drafts/${activeDraft.id}/publish`, {
+          method: 'POST'
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка публікації');
+        showAlert('Конспект успішно опубліковано на сайті!');
+        closeDraftEditor();
+      } catch (err) {
+        showAlert(err.message, true);
+      } finally {
+        publishBtn.disabled = false;
+        publishBtn.textContent = originalText;
+      }
+    }
+
+    async function quickApproveDraft(draftId) {
+      if (!confirm('Опублікувати цю чернетку одразу на сайті?')) return;
+      try {
+        const res = await fetch(`/api/admin/drafts/${draftId}/publish`, {
+          method: 'POST'
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка публікації');
+        showAlert('Конспект успішно опубліковано на сайті!');
+        loadDrafts();
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    async function deleteDraft(draftId) {
+      if (!confirm('Видалити цю чернетку? Цю дію неможливо скасувати.')) return;
+      try {
+        const res = await fetch(`/api/admin/drafts/${draftId}`, {
+          method: 'DELETE'
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Помилка видалення');
+        showAlert('Чернетку видалено.');
+        if (activeDraft && activeDraft.id === draftId) {
+          closeDraftEditor();
+        } else {
+          loadDrafts();
+        }
+      } catch (err) {
+        showAlert(err.message, true);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.getElementById('refreshDraftsBtn').addEventListener('click', loadDrafts);
+    document.getElementById('backToListBtn').addEventListener('click', closeDraftEditor);
+    document.getElementById('saveDraftBtn').addEventListener('click', saveDraftChanges);
+    document.getElementById('publishDraftBtn').addEventListener('click', publishDraft);
+    document.getElementById('deleteDraftFromEditorBtn').addEventListener('click', () => {
+      if (activeDraft) deleteDraft(activeDraft.id);
+    });
+
+    document.getElementById('addDateBtn').addEventListener('click', () => {
+      collectCurrentEditorData();
+      if (!activeDraft.dates) activeDraft.dates = [];
+      activeDraft.dates.push({ name: '', description: '', is_mandatory: 0 });
+      renderDatesEditor(activeDraft.dates);
+    });
+
+    document.getElementById('addTermBtn').addEventListener('click', () => {
+      collectCurrentEditorData();
+      if (!activeDraft.terms) activeDraft.terms = [];
+      activeDraft.terms.push({ name: '', description: '' });
+      renderTermsEditor(activeDraft.terms);
+    });
+
+    document.getElementById('addImageBtn').addEventListener('click', () => {
+      collectCurrentEditorData();
+      if (!activeDraft.images) activeDraft.images = [];
+      activeDraft.images.push({ doc_name: '', name: '', type: 0, show_in_note: true, file_path: '' });
+      renderImagesEditor(activeDraft.images);
+    });
+
+    document.getElementById('addPersonBtn').addEventListener('click', () => {
+      collectCurrentEditorData();
+      if (!activeDraft.persons) activeDraft.persons = [];
+      activeDraft.persons.push({ name: '', bio: '', photo_path: '' });
+      renderPersonsEditor(activeDraft.persons);
+    });
+
+    loadDrafts();
+  </script>
+</body>
+</html>

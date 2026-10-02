@@ -1607,6 +1607,11 @@
           <span>Конспект</span>
         </button>
 
+        <a href="/admin" class="toggle-nav-btn" aria-label="Адмін-панель" title="Адмін-панель" style="text-decoration: none;">
+          <span>⚙️</span>
+          <span>Адмін</span>
+        </a>
+
         <button id="openPersonsBtn" class="toggle-nav-btn" aria-label="Відкрити список людей" title="Видатні постаті">
           <span>👤</span>
           <span>Люди</span>
@@ -1834,7 +1839,7 @@
           </div>
 
           <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
-            <button class="primary-action-btn" id="saveAllFilesBtn" type="button">💾 Зберегти всі файли у проект</button>
+            <button class="primary-action-btn" id="saveAllFilesBtn" type="button">💾 Зберегти в чернетки</button>
           </div>
 
           <div class="save-status-msg" id="saveStatusMsg" style="display: none;"></div>
@@ -1861,7 +1866,7 @@
   </div>
 
   <script>
-    const ALLOW_ADDING_NOTES = false;
+    const ALLOW_ADDING_NOTES = true;
 
     let projectDirHandle = null;
 
@@ -2469,10 +2474,11 @@
       return blockSelect.value;
     }
 
-    function runScanStep() {
+    async function runScanStep() {
       const blockName = getSelectedBlockName();
       const topicInput = document.getElementById('addNoteTopicInput');
       const textarea = document.getElementById('addNoteMarkdownText');
+      const startScanBtn = document.getElementById('startScanBtn');
 
       if (!blockName) {
         alert('Будь ласка, оберіть або введіть назву блоку.');
@@ -2491,29 +2497,54 @@
         return;
       }
 
-      const scanResult = scanMarkdownContent(markdownText);
-      appState.currentScanData = {
-        block: blockName,
-        topic: topicName,
-        markdown: markdownText,
-        ...scanResult
-      };
+      startScanBtn.disabled = true;
+      startScanBtn.textContent = 'Сканування...';
 
-      renderScanResultsUI(appState.currentScanData);
+      try {
+        const res = await fetch('/api/scan-note', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            block_name: blockName,
+            theme_name: topicName,
+            markdown: markdownText
+          })
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          alert(result.error || 'Помилка сканування конспекту');
+          return;
+        }
 
-      document.getElementById('addNoteStep1').style.display = 'none';
-      document.getElementById('addNoteStep2').style.display = 'block';
+        appState.currentScanData = {
+          block: blockName,
+          topic: topicName,
+          markdown: markdownText,
+          ...result
+        };
+
+        renderScanResultsUI(appState.currentScanData);
+
+        document.getElementById('addNoteStep1').style.display = 'none';
+        document.getElementById('addNoteStep2').style.display = 'block';
+      } catch (err) {
+        alert('Помилка сервера: ' + err.message);
+      } finally {
+        startScanBtn.disabled = false;
+        startScanBtn.textContent = '🔍 Просканувати конспект';
+      }
     }
 
     function renderScanResultsUI(data) {
       const summaryBar = document.getElementById('scanSummaryBar');
+      const newPersons = (data.persons || []).filter(p => !p.exists);
       summaryBar.innerHTML = `
         <div class="scan-stat-chip">Блок: ${escapeHtml(data.block)}</div>
         <div class="scan-stat-chip">Тема: ${escapeHtml(data.topic)}</div>
         <div class="scan-stat-chip">📅 Дат: ${data.dates.length}</div>
         <div class="scan-stat-chip">📖 Термінів: ${data.terms.length}</div>
         <div class="scan-stat-chip">🖼️ Зображень: ${data.images.length}</div>
-        <div class="scan-stat-chip">👤 Постатей: ${data.persons.length}</div>
+        <div class="scan-stat-chip">👤 Нових діячів: ${newPersons.length}</div>
       `;
 
       const datesSection = document.getElementById('scanDatesSection');
@@ -2522,11 +2553,20 @@
       if (data.dates.length > 0) {
         datesSection.style.display = 'block';
         data.dates.forEach(d => {
+          const dName = d.name || d;
           const row = document.createElement('div');
           row.className = 'scan-item-row';
           row.innerHTML = `
-            <span class="scan-tag-key" title="${escapeHtml(d)}">${escapeHtml(d)}</span>
-            <input type="text" class="form-input scan-date-input" data-key="${escapeHtml(d)}" placeholder="Пов'язана подія / опис дати..." />
+            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <span class="scan-tag-key" title="${escapeHtml(dName)}">${escapeHtml(dName)}</span>
+                <label class="checkbox-label" style="font-size: 0.78rem; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                  <input type="checkbox" class="scan-date-mand" data-key="${escapeHtml(dName)}" />
+                  <span>Обов'язкова дата (Is_Mandority)</span>
+                </label>
+              </div>
+              <input type="text" class="form-input scan-date-input" data-key="${escapeHtml(dName)}" placeholder="Пов'язана подія / опис дати..." />
+            </div>
           `;
           datesList.appendChild(row);
         });
@@ -2540,11 +2580,12 @@
       if (data.terms.length > 0) {
         termsSection.style.display = 'block';
         data.terms.forEach(t => {
+          const tName = t.name || t;
           const row = document.createElement('div');
           row.className = 'scan-item-row';
           row.innerHTML = `
-            <span class="scan-tag-key" title="${escapeHtml(t)}">${escapeHtml(t)}</span>
-            <input type="text" class="form-input scan-term-input" data-key="${escapeHtml(t)}" placeholder="Визначення терміну..." />
+            <span class="scan-tag-key" title="${escapeHtml(tName)}">${escapeHtml(tName)}</span>
+            <input type="text" class="form-input scan-term-input" data-key="${escapeHtml(tName)}" placeholder="Визначення терміну..." />
           `;
           termsList.appendChild(row);
         });
@@ -2560,19 +2601,29 @@
         data.images.forEach(img => {
           const card = document.createElement('div');
           card.className = 'scan-card-item';
-          const displayBadge = img.showInNote 
+          const displayBadge = img.show_in_note 
             ? '<span style="background: rgba(46,125,50,0.15); color: #2e7d32; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Показувати в конспекті (!)</span>' 
             : '<span style="background: rgba(25,118,210,0.15); color: #1565c0; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Тільки в галереї</span>';
           card.innerHTML = `
             <div class="scan-card-title" style="display: flex; justify-content: space-between; align-items: center;">
-              <span>🖼️ ${escapeHtml(img.name)}</span>
+              <span>🖼️ ${escapeHtml(img.doc_name)}</span>
               ${displayBadge}
             </div>
-            <select class="form-select scan-img-type-select" data-name="${escapeHtml(img.name)}">
-              <option value="maps"${img.type === 'maps' ? ' selected' : ''}>Карти (Images/maps)</option>
-              <option value="monuments"${img.type === 'monuments' ? ' selected' : ''}>Пам'ятки (Images/monuments)</option>
-            </select>
-            <input type="file" class="file-input-custom scan-img-file" data-name="${escapeHtml(img.name)}" accept="image/*" />
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 4px;">Назва в галереї:</label>
+              <input type="text" class="form-input scan-img-display-name" data-doc="${escapeHtml(img.doc_name)}" value="${escapeHtml(img.name || img.doc_name)}" />
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 4px;">Тип картинки:</label>
+              <select class="form-select scan-img-type-select" data-doc="${escapeHtml(img.doc_name)}">
+                <option value="0"${img.type === 0 ? ' selected' : ''}>Карти (тип 0)</option>
+                <option value="1"${img.type === 1 ? ' selected' : ''}>Пам'ятки (тип 1)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 4px;">Файл зображення:</label>
+              <input type="file" class="file-input-custom scan-img-file" data-doc="${escapeHtml(img.doc_name)}" accept="image/*" />
+            </div>
           `;
           imagesList.appendChild(card);
         });
@@ -2583,23 +2634,21 @@
       const personsSection = document.getElementById('scanPersonsSection');
       const personsList = document.getElementById('scanPersonsList');
       personsList.innerHTML = '';
-      if (data.persons.length > 0) {
+      if (newPersons.length > 0) {
         personsSection.style.display = 'block';
-        data.persons.forEach(p => {
+        newPersons.forEach(p => {
+          const pName = p.name;
           const card = document.createElement('div');
           card.className = 'scan-card-item';
-          const existingData = appState.allPersonsByName.get(p.trim().toLowerCase());
-          const existingBio = existingData ? existingData.person.bio : '';
-          const hasExistingPhoto = existingData && existingData.person.imageUrl;
-
           card.innerHTML = `
-            <div class="scan-card-title">👤 ${escapeHtml(p)}</div>
-            <textarea class="form-input scan-person-bio" data-name="${escapeHtml(p)}" style="min-height: 80px;" placeholder="Біографія особи...">${escapeHtml(existingBio)}</textarea>
+            <div class="scan-card-title">👤 ${escapeHtml(pName)}</div>
             <div>
-              <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 4px;">
-                ${hasExistingPhoto ? 'Портрет (вже завантажено, можна замінити):' : 'Завантажити фото портрета:'}
-              </label>
-              <input type="file" class="file-input-custom scan-person-photo" data-name="${escapeHtml(p)}" accept="image/*" />
+              <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 4px;">Біографія:</label>
+              <textarea class="form-input scan-person-bio" data-name="${escapeHtml(pName)}" style="min-height: 80px;" placeholder="Біографія діяча..."></textarea>
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 4px;">Фото профілю (портрет):</label>
+              <input type="file" class="file-input-custom scan-person-photo" data-name="${escapeHtml(pName)}" accept="image/*" />
             </div>
           `;
           personsList.appendChild(card);
@@ -2609,189 +2658,114 @@
       }
     }
 
-    async function getProjectDirectoryHandle() {
-      if (projectDirHandle) return projectDirHandle;
-      if (!window.showDirectoryPicker) {
-        throw new Error('Ваш браузер не підтримує File System Access API. Будь ласка, використовуйте Chrome або Edge.');
-      }
-      projectDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      return projectDirHandle;
-    }
-
-    async function writeTextFileToProject(dirHandle, subfolder, filename, content) {
-      let targetDir = dirHandle;
-      if (subfolder) {
-        const parts = subfolder.split('/');
-        for (const p of parts) {
-          if (p) targetDir = await targetDir.getDirectoryHandle(p, { create: true });
-        }
-      }
-      const fileHandle = await targetDir.getFileHandle(filename, { create: true });
-      const writable = await fileHandle.createWritable();
-      await writable.write(content);
-      await writable.close();
-    }
-
-    async function writeBlobFileToProject(dirHandle, subfolder, filename, blob) {
-      let targetDir = dirHandle;
-      if (subfolder) {
-        const parts = subfolder.split('/');
-        for (const p of parts) {
-          if (p) targetDir = await targetDir.getDirectoryHandle(p, { create: true });
-        }
-      }
-      const fileHandle = await targetDir.getFileHandle(filename, { create: true });
-      const writable = await fileHandle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-    }
-
-    async function readTextFileFromProject(dirHandle, subfolder, filename) {
-      try {
-        let targetDir = dirHandle;
-        if (subfolder) {
-          const parts = subfolder.split('/');
-          for (const p of parts) {
-            if (p) targetDir = await targetDir.getDirectoryHandle(p);
-          }
-        }
-        const fileHandle = await targetDir.getFileHandle(filename);
-        const file = await fileHandle.getFile();
-        return await file.text();
-      } catch (err) {
-        return null;
-      }
-    }
-
     async function saveNewNoteAndFiles() {
       const data = appState.currentScanData;
       if (!data) return;
 
       const saveStatus = document.getElementById('saveStatusMsg');
+      const saveBtn = document.getElementById('saveAllFilesBtn');
       saveStatus.style.display = 'block';
       saveStatus.className = 'save-status-msg';
-      saveStatus.textContent = 'Очікування вибору папки проекту...';
+      saveStatus.textContent = 'Збереження конспекту у чернетки...';
+      saveBtn.disabled = true;
 
       try {
-        const dirHandle = await getProjectDirectoryHandle();
-        saveStatus.textContent = 'Збереження файлів...';
-
-        const block = data.block;
-        const topic = data.topic;
-
-        let finalMarkdown = data.markdown;
+        const formData = new FormData();
+        formData.append('block_name', data.block);
+        formData.append('theme_name', data.topic);
+        formData.append('markdown', data.markdown);
 
         const dateInputs = document.querySelectorAll('.scan-date-input');
-        const dateLines = [];
+        const datesPayload = [];
         dateInputs.forEach(input => {
           const key = input.getAttribute('data-key');
           const val = input.value.trim();
-          dateLines.push(`${key} || ${val}`);
+          const mandCheck = document.querySelector(`.scan-date-mand[data-key="${CSS.escape(key)}"]`);
+          datesPayload.push({
+            name: key,
+            description: val,
+            is_mandatory: mandCheck && mandCheck.checked ? 1 : 0
+          });
         });
-        await writeTextFileToProject(dirHandle, 'Dates', `DT_${block}_${topic}.md`, dateLines.join('\n'));
+        formData.append('dates', JSON.stringify(datesPayload));
 
         const termInputs = document.querySelectorAll('.scan-term-input');
-        const termLines = [];
+        const termsPayload = [];
         termInputs.forEach(input => {
           const key = input.getAttribute('data-key');
           const val = input.value.trim();
-          termLines.push(`${key} || ${val}`);
-        });
-        await writeTextFileToProject(dirHandle, 'Terms', `TM_${block}_${topic}.md`, termLines.join('\n'));
-
-        const imageCards = document.querySelectorAll('.scan-card-item .scan-img-file');
-        for (const input of imageCards) {
-          const name = input.getAttribute('data-name');
-          const typeSelect = document.querySelector(`.scan-img-type-select[data-name="${name}"]`);
-          const type = typeSelect ? typeSelect.value : 'maps';
-          let ext = 'png';
-          if (input.files.length > 0) {
-            const file = input.files[0];
-            ext = file.name.split('.').pop() || 'png';
-            const saveFilename = `${block}_${topic}_${name}.${ext}`;
-            await writeBlobFileToProject(dirHandle, `Images/${type}`, saveFilename, file);
-          }
-          const fullPath = `/Images/${type}/${block}_${topic}_${name}.${ext}`;
-          const searchPattern = new RegExp('!___' + escapeRegExp(name) + '___', 'g');
-          finalMarkdown = finalMarkdown.replace(searchPattern, `![${name}](${fullPath})`);
-        }
-
-        const fallbackInlineRegex = /!___([^\r\n]+?)___/g;
-        finalMarkdown = finalMarkdown.replace(fallbackInlineRegex, (match, fallbackName) => {
-          const cleanName = fallbackName.trim();
-          return `![${cleanName}](/Images/maps/${block}_${topic}_${cleanName}.png)`;
-        });
-
-        await writeTextFileToProject(dirHandle, 'Notes', `NT_${block}_${topic}.md`, finalMarkdown);
-
-        const personBioInputs = document.querySelectorAll('.scan-person-bio');
-        const newPersonsMap = new Map();
-
-        const existingPsText = await readTextFileFromProject(dirHandle, 'Persons', `PS_${block}.md`);
-        if (existingPsText) {
-          const existingList = parseKeyValueLines(existingPsText);
-          existingList.forEach(item => {
-            newPersonsMap.set(item.key.trim().toLowerCase(), { key: item.key.trim(), val: item.value });
+          termsPayload.push({
+            name: key,
+            description: val
           });
-        }
-
-        personBioInputs.forEach(input => {
-          const pName = input.getAttribute('data-name');
-          const bio = input.value.trim();
-          newPersonsMap.set(pName.trim().toLowerCase(), { key: pName.trim(), val: bio });
         });
+        formData.append('terms', JSON.stringify(termsPayload));
 
-        const psLines = Array.from(newPersonsMap.values()).map(p => `${p.key} || ${p.val}`);
-        await writeTextFileToProject(dirHandle, 'Persons', `PS_${block}.md`, psLines.join('\n'));
+        const imagesPayload = [];
+        (data.images || []).forEach(img => {
+          const docName = img.doc_name;
+          const nameInput = document.querySelector(`.scan-img-display-name[data-doc="${CSS.escape(docName)}"]`);
+          const typeSelect = document.querySelector(`.scan-img-type-select[data-doc="${CSS.escape(docName)}"]`);
+          const fileInput = document.querySelector(`.scan-img-file[data-doc="${CSS.escape(docName)}"]`);
+          const displayName = nameInput ? nameInput.value.trim() : docName;
+          const imgType = typeSelect ? Number(typeSelect.value) : 0;
 
-        const personPhotoInputs = document.querySelectorAll('.scan-person-photo');
-        for (const input of personPhotoInputs) {
-          if (input.files.length > 0) {
-            const file = input.files[0];
-            const pName = input.getAttribute('data-name');
-            const ext = file.name.split('.').pop() || 'png';
-            await writeBlobFileToProject(dirHandle, 'PersonImages', `${pName}.${ext}`, file);
+          imagesPayload.push({
+            doc_name: docName,
+            name: displayName || docName,
+            type: imgType,
+            show_in_note: !!img.show_in_note
+          });
+
+          if (fileInput && fileInput.files.length > 0) {
+            formData.append(`image_file_${docName}`, fileInput.files[0]);
           }
-        }
+        });
+        formData.append('images', JSON.stringify(imagesPayload));
 
-        let listJsonObj = {};
-        const listText = await readTextFileFromProject(dirHandle, '', 'list.json');
-        if (listText) {
-          try {
-            listJsonObj = JSON.parse(listText);
-          } catch (e) {
-            listJsonObj = { ...appState.topicsMap };
+        const personsPayload = [];
+        const newPersons = (data.persons || []).filter(p => !p.exists);
+        newPersons.forEach(p => {
+          const pName = p.name;
+          const bioInput = document.querySelector(`.scan-person-bio[data-name="${CSS.escape(pName)}"]`);
+          const photoInput = document.querySelector(`.scan-person-photo[data-name="${CSS.escape(pName)}"]`);
+          const bioVal = bioInput ? bioInput.value.trim() : '';
+
+          personsPayload.push({
+            name: pName,
+            bio: bioVal
+          });
+
+          if (photoInput && photoInput.files.length > 0) {
+            formData.append(`person_photo_${pName}`, photoInput.files[0]);
           }
-        } else {
-          listJsonObj = { ...appState.topicsMap };
-        }
+        });
+        formData.append('persons', JSON.stringify(personsPayload));
 
-        if (!listJsonObj[block]) {
-          listJsonObj[block] = [];
+        const res = await fetch('/api/drafts', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          throw new Error(result.error || 'Помилка збереження чернетки');
         }
-        if (!listJsonObj[block].includes(topic)) {
-          listJsonObj[block].push(topic);
-        }
-
-        await writeTextFileToProject(dirHandle, '', 'list.json', JSON.stringify(listJsonObj, null, 2));
 
         saveStatus.className = 'save-status-msg success';
-        saveStatus.textContent = 'Конспект та всі пов\'язані файли успішно збережено!';
-
-        appState.topicsMap = listJsonObj;
-        appState.blocks = Object.keys(listJsonObj);
-        renderBlocksUI();
-        await loadAllPersons();
+        saveStatus.textContent = 'Конспект успішно збережено в чернетки та очікує підтвердження в адмін-панелі!';
 
         setTimeout(() => {
           closeAddNoteModal();
-          selectBlock(block);
-          selectTopic(topic);
-        }, 1200);
+          document.getElementById('addNoteTopicInput').value = '';
+          document.getElementById('addNoteMarkdownText').value = '';
+          saveStatus.style.display = 'none';
+          saveBtn.disabled = false;
+        }, 2000);
 
       } catch (err) {
         saveStatus.className = 'save-status-msg error';
         saveStatus.textContent = `Помилка збереження: ${err.message}`;
+        saveBtn.disabled = false;
       }
     }
 
