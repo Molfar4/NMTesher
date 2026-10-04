@@ -8,7 +8,17 @@ from flask import Flask, jsonify, request, session, redirect, send_from_director
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder='.')
-CORS(app, resources={r"/api/*": {"origins": "https://example.com"}})
+
+cors_origins_env = os.environ.get('CORS_ORIGINS', '').strip()
+if cors_origins_env:
+    allowed_origins = [o.strip() for o in cors_origins_env.split(',') if o.strip()]
+else:
+    allowed_origins = [
+        "https://molfar4.github.io",
+        re.compile(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$")
+    ]
+
+CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
 app.secret_key = os.environ.get('SECRET_KEY', 'nmtesher-secret-key-12345')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -293,6 +303,13 @@ def index():
 def get_config():
     return jsonify({
         'allow_admin': ALLOW_ADMIN
+    })
+
+@app.route('/api/health')
+def health_check():
+    return jsonify({
+        'status': 'ok',
+        'message': 'NMTesher API is operational'
     })
 
 @app.route('/admin')
@@ -1515,4 +1532,6 @@ def serve_root_files(filename):
     abort(404)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() in ('true', '1')
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)

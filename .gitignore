@@ -3,3 +3,4 @@ palette.txt
 sqldbase.txt
 __pycache__/
 backup_old_data/
+DEPLOYMENT.md

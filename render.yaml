@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: nmtesher-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOW_ADMIN
+        value: "false"
+      - key: CORS_ORIGINS
+        value: "https://molfar4.github.io"
+      - key: PYTHON_VERSION
+        value: "3.11.9"

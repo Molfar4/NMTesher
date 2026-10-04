@@ -1602,12 +1602,12 @@
           <span id="activeTopicLabel">—</span>
         </div>
 
-        <button id="openAddNoteBtn" class="toggle-nav-btn add-note-nav-btn" aria-label="Додати конспект" title="Створити новий конспект">
+        <button id="openAddNoteBtn" class="toggle-nav-btn add-note-nav-btn" aria-label="Додати конспект" title="Створити новий конспект" style="display: none;">
           <span>➕</span>
           <span>Конспект</span>
         </button>
 
-        <a href="/admin" id="navAdminBtn" class="toggle-nav-btn" aria-label="Адмін-панель" title="Адмін-панель" style="text-decoration: none;">
+        <a href="/admin" id="navAdminBtn" class="toggle-nav-btn" aria-label="Адмін-панель" title="Адмін-панель" style="text-decoration: none; display: none;">
           <span>⚙️</span>
           <span>Адмін</span>
         </a>
@@ -1691,7 +1691,7 @@
 
     <div class="note-container">
       <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-        <button id="suggestNoteCorrectionBtn" class="toggle-nav-btn" type="button" style="font-size: 0.8rem; padding: 4px 10px;" title="Запропонувати правку до цього конспекту">
+        <button id="suggestNoteCorrectionBtn" class="toggle-nav-btn" type="button" style="font-size: 0.8rem; padding: 4px 10px; display: none;" title="Запропонувати правку до цього конспекту">
           <span>✏️</span>
           <span>Запропонувати правку</span>
         </button>
@@ -1765,7 +1765,7 @@
             <button class="person-back-btn" id="personBackBtn">
               <span>← Назад до списку</span>
             </button>
-            <button id="suggestPersonCorrectionBtn" class="toggle-nav-btn" type="button" style="font-size: 0.8rem; padding: 4px 10px;" title="Запропонувати правку до цього діяча">
+            <button id="suggestPersonCorrectionBtn" class="toggle-nav-btn" type="button" style="font-size: 0.8rem; padding: 4px 10px; display: none;" title="Запропонувати правку до цього діяча">
               <span>✏️</span>
               <span>Запропонувати правку</span>
             </button>
@@ -1936,7 +1936,31 @@
 
   <script>
     const ALLOW_ADDING_NOTES = false;
+    const ALLOW_SUGGESTIONS = false;
     const ALLOW_ADMIN_PANEL = false;
+
+    const RENDER_BACKEND_URL = '-1'; 
+    const API_BASE_URL = window.__API_BASE_URL__ || (
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? ''
+        : RENDER_BACKEND_URL.replace(/\/+$/, '')
+    );
+
+    function apiUrl(path) {
+      const cleanPath = path.startsWith('/') ? path : '/' + path;
+      return `${API_BASE_URL}${cleanPath}`;
+    }
+
+    function resolveMediaUrl(url) {
+      if (!url) return '';
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+      }
+      if (url.startsWith('./')) {
+        return url;
+      }
+      return './' + url.replace(/^\/+/, '');
+    }
 
     let projectDirHandle = null;
 
@@ -1977,12 +2001,7 @@
         title = href.title || title || '';
         href = href.href || '';
       }
-      let cleanHref = href || '';
-      if (cleanHref.startsWith('/Images/')) {
-        cleanHref = '.' + cleanHref;
-      } else if (cleanHref.startsWith('/')) {
-        cleanHref = '.' + cleanHref;
-      }
+      let cleanHref = resolveMediaUrl(href || '');
       return `<img src="${cleanHref}" alt="${text || ''}" title="${title || ''}" loading="lazy" />`;
     };
 
@@ -2212,7 +2231,7 @@
     async function loadAllQuotes() {
       appState.quotesMap = {};
       try {
-        const response = await fetch('/api/all-quotes');
+        const response = await fetch(apiUrl('/api/all-quotes'));
         if (!response.ok) {
           throw new Error(`HTTP помилка: ${response.status}`);
         }
@@ -2339,7 +2358,7 @@
       appState.allPersonsByName.clear();
 
       try {
-        const response = await fetch('/api/all-persons');
+        const response = await fetch(apiUrl('/api/all-persons'));
         if (!response.ok) {
           throw new Error(`HTTP помилка: ${response.status}`);
         }
@@ -2348,6 +2367,9 @@
 
         Object.keys(data).forEach(blockName => {
           (data[blockName] || []).forEach(p => {
+            if (p.imageUrl) {
+              p.imageUrl = resolveMediaUrl(p.imageUrl);
+            }
             appState.allPersonsByName.set(p.name.trim().toLowerCase(), { block: blockName, person: p });
           });
         });
@@ -2508,6 +2530,8 @@
       if (!ALLOW_ADDING_NOTES) {
         if (openBtn) openBtn.style.display = 'none';
         return;
+      } else {
+        if (openBtn) openBtn.style.display = '';
       }
 
       if (openBtn) {
@@ -2560,8 +2584,8 @@
       }
 
       const navAdminBtn = document.getElementById('navAdminBtn');
-      if (!ALLOW_ADMIN_PANEL && navAdminBtn) {
-        navAdminBtn.style.display = 'none';
+      if (navAdminBtn) {
+        navAdminBtn.style.display = ALLOW_ADMIN_PANEL ? '' : 'none';
       }
     }
 
@@ -2597,6 +2621,15 @@
       const sendBtn = document.getElementById('sendSuggestionBtn');
       const suggestNoteBtn = document.getElementById('suggestNoteCorrectionBtn');
       const suggestPersonBtn = document.getElementById('suggestPersonCorrectionBtn');
+
+      if (!ALLOW_SUGGESTIONS) {
+        if (suggestNoteBtn) suggestNoteBtn.style.display = 'none';
+        if (suggestPersonBtn) suggestPersonBtn.style.display = 'none';
+        return;
+      } else {
+        if (suggestNoteBtn) suggestNoteBtn.style.display = '';
+        if (suggestPersonBtn) suggestPersonBtn.style.display = '';
+      }
 
       if (closeBtn) closeBtn.addEventListener('click', closeSuggestionModal);
       if (overlay) {
@@ -2640,7 +2673,7 @@
           sendBtn.textContent = 'Надсилання...';
 
           try {
-            const res = await fetch('/api/suggestions', {
+            const res = await fetch(apiUrl('/api/suggestions'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -2844,7 +2877,7 @@
       startScanBtn.textContent = 'Сканування...';
 
       try {
-        const res = await fetch('/api/scan-note', {
+        const res = await fetch(apiUrl('/api/scan-note'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3119,7 +3152,7 @@
         });
         formData.append('persons', JSON.stringify(personsPayload));
 
-        const res = await fetch('/api/drafts', {
+        const res = await fetch(apiUrl('/api/drafts'), {
           method: 'POST',
           body: formData
         });
@@ -3149,7 +3182,7 @@
     async function loadConfig() {
       try {
         await loadMainDates();
-        const response = await fetch('/api/blocks');
+        const response = await fetch(apiUrl('/api/blocks'));
         if (!response.ok) {
           throw new Error(`HTTP помилка: ${response.status}`);
         }
@@ -3170,7 +3203,7 @@
         parseConfig(appState.topicsMap);
       } catch (err) {
         console.error('Не вдалося завантажити дані:', err);
-        handleFetchError(err, '/api/blocks');
+        handleFetchError(err, apiUrl('/api/blocks'));
       }
     }
 
@@ -3295,14 +3328,17 @@
       `;
 
       try {
-        const response = await fetch(`/api/theme/${themeId}`);
+        const response = await fetch(apiUrl(`/api/theme/${themeId}`));
         if (!response.ok) {
           throw new Error(`Помилка завантаження теми (${response.status})`);
         }
         const themeData = await response.json();
         appState.currentDates = themeData.dates || [];
         appState.currentTerms = themeData.terms || [];
-        appState.currentImages = themeData.images || [];
+        appState.currentImages = (themeData.images || []).map(img => ({
+          ...img,
+          url: resolveMediaUrl(img.url)
+        }));
         appState.currentQuotes = themeData.quotes || [];
 
         renderSidePanel();
@@ -3320,9 +3356,9 @@
           const cleanName = imgName.trim();
           const matched = imagesByDocName.get(cleanName.toLowerCase());
           if (matched && matched.url) {
-            return `![${matched.name}](${matched.url})`;
+            return `![${matched.name}](${resolveMediaUrl(matched.url)})`;
           }
-          return `![${cleanName}](/Images/${cleanName})`;
+          return `![${cleanName}](./Images/${cleanName})`;
         });
 
         contentEl.innerHTML = marked.parse(markdownText);
@@ -3557,7 +3593,7 @@
       imgWrap.className = 'gallery-img-wrap';
 
       const img = document.createElement('img');
-      img.src = item.url;
+      img.src = resolveMediaUrl(item.url);
       img.alt = item.name;
       img.loading = 'lazy';
 
