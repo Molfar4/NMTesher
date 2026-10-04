@@ -1837,7 +1837,7 @@
 
           <div class="form-group">
             <div class="form-label">
-              <span>Текст конспекту (Markdown):</span>
+              <span>Текст конспекту:</span>
               <button class="secondary-action-btn" id="uploadMdFileBtn" type="button">📁 Завантажити .md файл</button>
               <input type="file" id="mdFileInput" accept=".md,.markdown,.txt" style="display: none;" />
             </div>
@@ -1935,8 +1935,8 @@
   </div>
 
   <script>
-    const ALLOW_ADDING_NOTES = true;
-    const ALLOW_ADMIN_PANEL = true;
+    const ALLOW_ADDING_NOTES = false;
+    const ALLOW_ADMIN_PANEL = false;
 
     let projectDirHandle = null;
 

@@ -5,14 +5,16 @@ import shutil
 import sqlite3
 from functools import wraps
 from flask import Flask, jsonify, request, session, redirect, send_from_directory, abort, render_template_string
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='.')
+CORS(app, resources={r"/api/*": {"origins": "https://example.com"}})
 app.secret_key = os.environ.get('SECRET_KEY', 'nmtesher-secret-key-12345')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'Database.db')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin')
-ALLOW_ADMIN = os.environ.get('ALLOW_ADMIN', 'true').lower() in ('true', '1')
+ALLOW_ADMIN = os.environ.get('ALLOW_ADMIN', 'false').lower() in ('true', '1')
 
 ADMIN_LOGIN_HTML = """<!DOCTYPE html>
 <html lang="uk">
